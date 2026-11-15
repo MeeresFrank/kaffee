@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kaffee">
+<meta name="theme-color" content="#F6EFE6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1C1411" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Kaffee-Tagebuch</title>
+<style>
+  :root {
+    --bg: #F6EFE6; --card: #FFFBF5; --text: #3B2A20; --muted: #7A6353;
+    --caramel: #A0612B; --caramel-soft: rgba(160, 97, 43, .13); --on-caramel: #FFFFFF;
+    --line: rgba(59, 42, 32, .12); --danger: #B3261E;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1C1411; --card: #2A1F19; --text: #F3E7D9; --muted: #BFA893;
+      --caramel: #D99A5B; --caramel-soft: rgba(217, 154, 91, .16); --on-caramel: #1C1411;
+      --line: rgba(243, 231, 217, .12); --danger: #FF8A80;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 17px; line-height: 1.4;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  .serif { font-family: ui-serif, "New York", Georgia, "Times New Roman", serif; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  input, select, textarea { font: inherit; font-size: 17px; color: var(--text); }
+  svg { display: block; }
+  [hidden] { display: none !important; }
+
+  /* ---------- Kopfzeile ---------- */
+  .bar {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: calc(env(safe-area-inset-top) + 8px) 16px 8px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  }
+  .bar .title { font-size: 17px; font-weight: 700; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .icon-btn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 22px; color: var(--caramel); }
+  .icon-btn:active { background: var(--caramel-soft); }
+  .icon-btn:disabled { opacity: .35; }
+  .text-btn { color: var(--caramel); font-size: 17px; padding: 10px 4px; min-width: 44px; }
+  .text-btn.strong { font-weight: 600; }
+  .text-btn:disabled { opacity: .35; }
+
+  .page { padding: 0 16px calc(env(safe-area-inset-bottom) + 32px); max-width: 720px; margin: 0 auto; }
+  h1.big { font-size: 34px; margin: 4px 0 12px; font-weight: 700; letter-spacing: -.01em; }
+
+  /* ---------- Liste ---------- */
+  .search {
+    width: 100%; padding: 10px 14px; border-radius: 12px; border: 0;
+    background: var(--caramel-soft); margin-bottom: 14px; outline: none;
+  }
+  .search::placeholder { color: var(--muted); }
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .row {
+    display: flex; gap: 12px; align-items: center; width: 100%; text-align: left;
+    padding: 10px; border-radius: 16px; background: var(--card);
+  }
+  .row:active { filter: brightness(.96); }
+  .thumb {
+    width: 60px; height: 60px; border-radius: 12px; flex: none; overflow: hidden;
+    background: var(--caramel-soft); color: var(--caramel); display: grid; place-items: center;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .row-main { flex: 1; min-width: 0; }
+  .row-name { font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-sub { color: var(--muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+  .row-date { color: var(--muted); font-size: 13px; }
+  .stars { color: var(--caramel); letter-spacing: 1px; font-size: 14px; }
+  .stars .off { opacity: .3; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty .cup { color: var(--caramel); margin: 0 auto 12px; width: 64px; }
+  .empty h2 { color: var(--text); margin: 0 0 6px; font-size: 22px; }
+  .primary {
+    background: var(--caramel); color: var(--on-caramel); font-weight: 600;
+    padding: 12px 20px; border-radius: 14px; margin-top: 16px;
+  }
+  .primary:active { filter: brightness(.92); }
+
+  /* ---------- Vollbild-Ansichten ---------- */
+  .screen {
+    position: fixed; inset: 0; z-index: 10; background: var(--bg);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    animation: slideIn .22s ease-out;
+  }
+  @keyframes slideIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .screen { animation: none; } }
+
+  .card { background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; }
+  .card-title { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--caramel); margin-bottom: 10px; }
+
+  /* Detail */
+  .carousel { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 20px; margin-bottom: 16px; }
+  .carousel img { width: 100%; flex: none; height: 320px; object-fit: cover; scroll-snap-align: center; border-radius: 20px; }
+  .detail-name { font-size: 32px; font-weight: 700; margin: 0; line-height: 1.15; }
+  .detail-roaster { color: var(--muted); font-size: 20px; margin-top: 2px; }
+  .detail-meta { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 18px; }
+  .detail-meta .stars { font-size: 22px; }
+  .detail-meta .date { color: var(--muted); font-size: 15px; text-align: right; }
+  .info { display: flex; justify-content: space-between; padding: 6px 0; }
+  .info span:first-child { color: var(--muted); }
+  .info span:last-child { font-variant-numeric: tabular-nums; }
+  .method-line { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .divider { height: 1px; background: var(--line); margin: 10px 0 4px; }
+  .notes { white-space: pre-wrap; }
+  .danger-btn { color: var(--danger); width: 100%; padding: 14px; border-radius: 14px; background: var(--card); font-weight: 600; }
+
+  /* Formular */
+  .group { background: var(--card); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
+  .group-label { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 18px 4px 6px; }
+  .field { display: flex; align-items: center; gap: 10px; padding: 0 16px; min-height: 48px; border-bottom: 1px solid var(--line); }
+  .field:last-child { border-bottom: 0; }
+  .field label { flex: none; }
+  .field input, .field select, .field textarea {
+    flex: 1; min-width: 0; border: 0; background: transparent; outline: none; padding: 12px 0;
+  }
+  .field input.right, .field select.right { text-align: right; text-align-last: right; }
+  .field .unit { color: var(--muted); width: 28px; flex: none; }
+  .field textarea { resize: none; min-height: 90px; }
+  .field.full input { font-weight: 600; }
+  .invalid { color: var(--danger) !important; }
+  .hint { font-size: 13px; color: var(--danger); margin: 6px 4px 0; }
+  .star-pick { display: flex; gap: 6px; padding: 8px 12px; }
+  .star-pick button { font-size: 32px; width: 44px; height: 48px; color: var(--caramel); }
+  .star-pick button.off { opacity: .3; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
+  .chip { padding: 7px 13px; border-radius: 999px; background: var(--caramel-soft); font-size: 15px; }
+  .chip.on { background: var(--caramel); color: var(--on-caramel); }
+  .photo-strip { display: flex; gap: 10px; overflow-x: auto; padding: 12px 16px 4px; }
+  .photo-strip .ph { position: relative; flex: none; width: 92px; height: 92px; border-radius: 12px; overflow: hidden; background: var(--caramel-soft); }
+  .photo-strip img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-strip .rm {
+    position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 14px;
+    background: rgba(0,0,0,.6); color: #fff; display: grid; place-items: center; font-size: 16px; line-height: 1;
+  }
+  .add-photo { display: flex; align-items: center; gap: 10px; color: var(--caramel); padding: 14px 16px; width: 100%; text-align: left; }
+
+  /* Dialog */
+  .backdrop { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.4); display: grid; place-items: end center; padding: 16px; padding-bottom: calc(env(safe-area-inset-bottom) + 16px); }
+  .sheet { background: var(--card); border-radius: 20px; padding: 20px; width: 100%; max-width: 480px; text-align: center; }
+  .sheet h3 { margin: 0 0 6px; font-size: 20px; }
+  .sheet p { color: var(--muted); margin: 0 0 16px; font-size: 15px; }
+  .sheet .primary { width: 100%; margin-top: 0; }
+  .sheet .secondary { width: 100%; padding: 12px; margin-top: 8px; color: var(--caramel); font-weight: 600; }
+  .sheet .destructive { width: 100%; padding: 12px; border-radius: 14px; background: var(--danger); color: #fff; font-weight: 600; }
+  .busy { color: var(--muted); font-size: 15px; padding: 12px 16px; }
+</style>
+</head>
+<body>
+
+<!-- ============ Liste ============ -->
+<div id="listView">
+  <div class="bar">
+    <button class="icon-btn" id="exportBtn" aria-label="Exportieren">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+    </button>
+    <span class="title" id="smallTitle" style="opacity:0"></span>
+    <button class="icon-btn" id="newBtn" aria-label="Neuer Eintrag">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+  <main class="page">
+    <h1 class="big serif">Kaffee-Tagebuch</h1>
+    <input class="search" id="search" type="search" placeholder="Sorte, Röster, Notiz …" autocomplete="off" hidden>
+    <div class="list" id="list"></div>
+    <div class="empty" id="empty" hidden>
+      <div class="cup" id="emptyCup"></div>
+      <h2 class="serif">Noch keine Einträge</h2>
+      <div>Halte deinen ersten Kaffee fest – mit Rezept, Bewertung und Foto.</div>
+      <button class="primary" id="firstBtn">Ersten Kaffee eintragen</button>
+    </div>
+    <div class="empty" id="noResults" hidden>Keine Treffer.</div>
+  </main>
+</div>
+
+<!-- ============ Detail ============ -->
+<div class="screen" id="detailView" hidden>
+  <div class="bar">
+    <button class="text-btn" id="detailBack">‹ Zurück</button>
+    <span class="title"></span>
+    <button class="text-btn strong" id="detailEdit">Bearbeiten</button>
+  </div>
+  <div class="page" id="detailContent"></div>
+</div>
+
+<!-- ============ Bearbeiten ============ -->
+<div class="screen" id="editView" hidden>
+  <div class="bar">
+    <button class="text-btn" id="editCancel">Abbrechen</button>
+    <span class="title serif" id="editTitle">Neuer Kaffee</span>
+    <button class="text-btn strong" id="editSave">Sichern</button>
+  </div>
+  <form class="page" id="editForm" autocomplete="off" onsubmit="return false">
+    <div class="group-label">Kaffee</div>
+    <div class="group">
+      <div class="field full"><input id="fName" placeholder="Sorte / Bohne" aria-label="Sorte / Bohne"></div>
+      <div class="field"><input id="fRoaster" placeholder="Röster (optional)" aria-label="Röster"></div>
+      <div class="field"><label for="fDate">Datum</label><input id="fDate" type="datetime-local" class="right"></div>
+    </div>
+
+    <div class="group-label">Zubereitung</div>
+    <div class="group">
+      <div class="field"><label for="fMethod">Methode</label><select id="fMethod" class="right"></select></div>
+    </div>
+
+    <div class="group-label">Rezept (optional)</div>
+    <div class="group">
+      <div class="field"><label for="fCoffee">Kaffee</label><input id="fCoffee" class="right" inputmode="decimal" placeholder="18"><span class="unit">g</span></div>
+      <div class="field"><label for="fWater">Wasser</label><input id="fWater" class="right" inputmode="decimal" placeholder="250"><span class="unit">g</span></div>
+      <div class="field"><label for="fGrind">Mahlgrad</label><input id="fGrind" class="right" placeholder="z. B. 18 oder fein"></div>
+      <div class="field"><label for="fTime">Brühzeit</label><input id="fTime" class="right" inputmode="text" placeholder="m:ss"><span class="unit">min</span></div>
+      <div class="field"><label for="fTemp">Temperatur</label><input id="fTemp" class="right" inputmode="decimal" placeholder="93"><span class="unit">°C</span></div>
+    </div>
+    <div class="hint" id="recipeHint" hidden>Bitte nur Zahlen eingeben. Brühzeit als 3:30 oder in Sekunden, z. B. 28.</div>
+
+    <div class="group-label">Bewertung</div>
+    <div class="group"><div class="star-pick" id="fStars"></div></div>
+
+    <div class="group-label">Geschmack</div>
+    <div class="group">
+      <div class="chips" id="fTags"></div>
+      <div class="field"><textarea id="fNotes" placeholder="Notiz" aria-label="Notiz"></textarea></div>
+    </div>
+
+    <div class="group-label">Fotos</div>
+    <div class="group">
+      <div class="photo-strip" id="fPhotos" hidden></div>
+      <button type="button" class="add-photo" id="addPhotoBtn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+        Foto aufnehmen oder auswählen
+      </button>
+      <div class="busy" id="photoBusy" hidden>Fotos werden geladen …</div>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    </div>
+  </form>
+</div>
+
+<!-- ============ Dialog ============ -->
+<div class="backdrop" id="dialog" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <h3 class="serif" id="dlgTitle"></h3>
+    <p id="dlgText"></p>
+    <div id="dlgButtons"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// ================= Stammdaten =================
+const METHODS = [
+  ["portafilter", "Siebträger"],
+  ["filter", "Filter / V60"],
+  ["frenchPress", "French Press"],
+  ["aeroPress", "AeroPress"],
+  ["fullyAutomatic", "Vollautomat"],
+  ["mokaPot", "Mokka-Kanne"],
+  ["cold", "Kaltgetränk"],
+  ["other", "Sonstiges"],
+];
+const METHOD_TITLE = Object.fromEntries(METHODS);
+
+const TAGS = [
+  ["chocolate", "schokoladig"], ["nutty", "nussig"], ["fruity", "fruchtig"],
+  ["floral", "blumig"], ["caramel", "karamellig"], ["spicy", "würzig"],
+  ["bitter", "bitter"], ["sour", "sauer"], ["mild", "mild"], ["strong", "kräftig"],
+];
+const TAG_TITLE = Object.fromEntries(TAGS);
+
+const CUP_SVG = `<svg viewBox="0 0 24 24" width="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3c-.6.8-.6 1.7 0 2.5M12 3c-.6.8-.6 1.7 0 2.5"/><path d="M3 21h16"/></svg>`;
+
+// ================= Hilfsfunktionen =================
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+
+const numFmt = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1, useGrouping: false });
+const fmtNum = (v) => (v == null ? "" : numFmt.format(v));
+function parseNum(text) {
+  const t = String(text).trim().replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : NaN;
+}
+const fmtTime = (s) => (s == null ? "" : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
+function parseTime(text) {
+  const t = String(text).trim().replace(/[.,]/g, ":");
+  if (!t) return null;
+  const parts = t.split(":");
+  if (parts.length === 2 && /^\d+$/.test(parts[0]) && /^\d{1,2}$/.test(parts[1]) && +parts[1] < 60) return +parts[0] * 60 + +parts[1];
+  if (parts.length === 1 && /^\d+$/.test(parts[0])) return +parts[0];
+  return NaN;
+}
+const isBad = (v) => typeof v === "number" && Number.isNaN(v);
+
+const pad = (n) => String(n).padStart(2, "0");
+const fmtDateShort = (d) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+const fmtClock = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmtDateLong = (d) => d.toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" }) + ", " + fmtClock(d) + " Uhr";
+const toLocalInput = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fileStamp = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+
+const starsHTML = (r) => "★".repeat(r) + `<span class="off">${"★".repeat(5 - r)}</span>`;
+const ratio = (e) => (e.coffeeGrams > 0 && e.waterGrams != null ? e.waterGrams / e.coffeeGrams : null);
+
+// ================= Speicher (IndexedDB) =================
+let db;
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("kaffee-tagebuch", 1);
+    req.onupgradeneeded = () => {
+      const d = req.result;
+      if (!d.objectStoreNames.contains("entries")) d.createObjectStore("entries", { keyPath: "id" });
+      if (!d.objectStoreNames.contains("photos")) d.createObjectStore("photos", { keyPath: "id" });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+function run(store, mode, fn) {
+  return new Promise((resolve, reject) => {
+    const t = db.transaction(store, mode);
+    const req = fn(t.objectStore(store));
+    let result;
+    if (req) req.onsuccess = () => { result = req.result; };
+    t.oncomplete = () => resolve(result);
+    t.onerror = () => reject(t.error);
+    t.onabort = () => reject(t.error);
+  });
+}
+const dbAll = (store) => run(store, "readonly", (s) => s.getAll());
+const dbGet = (store, id) => run(store, "readonly", (s) => s.get(id));
+const dbPut = (store, value) => run(store, "readwrite", (s) => s.put(value));
+const dbDelete = (store, id) => run(store, "readwrite", (s) => s.delete(id));
+
+// ================= Fotos =================
+const urlCache = new Map(); // "thumb:id" / "full:id" -> objectURL
+
+function loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Bild konnte nicht gelesen werden")); };
+    img.src = url;
+  });
+}
+function scaleToJpeg(img, maxSide, quality) {
+  const f = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.round(img.naturalWidth * f), h = Math.round(img.naturalHeight * f);
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  c.getContext("2d").drawImage(img, 0, 0, w, h);
+  return new Promise((resolve) => c.toBlob((b) => resolve(b), "image/jpeg", quality));
+}
+async function savePhoto(file) {
+  const img = await loadImage(file);
+  const full = await scaleToJpeg(img, 1600, 0.85);
+  const thumb = await scaleToJpeg(img, 300, 0.8);
+  const id = uuid();
+  await dbPut("photos", { id, full: await full.arrayBuffer(), thumb: await thumb.arrayBuffer() });
+  return id;
+}
+async function photoURL(id, kind) {
+  const key = kind + ":" + id;
+  if (urlCache.has(key)) return urlCache.get(key);
+  const rec = await dbGet("photos", id);
+  if (!rec) return null;
+  const url = URL.createObjectURL(new Blob([rec[kind]], { type: "image/jpeg" }));
+  urlCache.set(key, url);
+  return url;
+}
+async function deletePhoto(id) {
+  for (const k of ["thumb:" + id, "full:" + id]) {
+    if (urlCache.has(k)) { URL.revokeObjectURL(urlCache.get(k)); urlCache.delete(k); }
+  }
+  await dbDelete("photos", id);
+}
+
+// ================= Zustand =================
+let entries = [];
+let currentId = null;     // Detailansicht
+let draft = null;         // Formular
+let original = null;
+let addedPhotos = [];
+
+async function loadEntries() {
+  entries = (await dbAll("entries")).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+// ================= Dialog =================
+function dialog(title, text, buttons) {
+  $("dlgTitle").textContent = title;
+  $("dlgText").textContent = text;
+  const box = $("dlgButtons");
+  box.innerHTML = "";
+  for (const b of buttons) {
+    const el = document.createElement("button");
+    el.className = b.style || "secondary";
+    el.textContent = b.label;
+    el.onclick = () => { if (!b.keepOpen) closeDialog(); b.action && b.action(); };
+    box.appendChild(el);
+  }
+  $("dialog").hidden = false;
+}
+const closeDialog = () => { $("dialog").hidden = true; };
+$("dialog").addEventListener("click", (e) => { if (e.target.id === "dialog") closeDialog(); });
+
+// ================= Liste =================
+async function renderList() {
+  const q = $("search").value.trim().toLowerCase();
+  const filtered = !q ? entries : entries.filter((e) =>
+    [e.coffeeName, e.roaster, e.notes, METHOD_TITLE[e.method] || ""].some((t) => (t || "").toLowerCase().includes(q)) ||
+    (e.flavorTags || []).some((t) => (TAG_TITLE[t] || "").includes(q)));
+
+  $("empty").hidden = entries.length > 0;
+  $("search").hidden = entries.length === 0;
+  $("exportBtn").disabled = entries.length === 0;
+  $("noResults").hidden = !(entries.length > 0 && filtered.length === 0);
+
+  const list = $("list");
+  list.innerHTML = filtered.map((e) => {
+    const d = new Date(e.date);
+    const sub = [METHOD_TITLE[e.method] || "Sonstiges", e.roaster].filter(Boolean).join(" · ");
+    return `<button class="row" data-id="${esc(e.id)}">
+      <div class="thumb" data-thumb="${esc((e.photoIds || [])[0] || "")}"><div style="width:30px">${CUP_SVG}</div></div>
+      <div class="row-main">
+        <div class="row-name serif">${esc(e.coffeeName)}</div>
+        <div class="row-sub">${esc(sub)}</div>
+        <div class="row-meta"><span class="stars" aria-label="${e.rating} von 5 Sternen">${starsHTML(e.rating)}</span><span class="row-date">${fmtDateShort(d)}</span></div>
+      </div>
+    </button>`;
+  }).join("");
+
+  for (const el of list.querySelectorAll("[data-thumb]")) {
+    const id = el.dataset.thumb;
+    if (!id) continue;
+    photoURL(id, "thumb").then((url) => { if (url) el.innerHTML = `<img src="${url}" alt="">`; });
+  }
+}
+$("list").addEventListener("click", (e) => {
+  const row = e.target.closest(".row");
+  if (row) openDetail(row.dataset.id);
+});
+$("search").addEventListener("input", renderList);
+$("newBtn").onclick = () => openEdit(null);
+$("firstBtn").onclick = () => openEdit(null);
+$("emptyCup").innerHTML = CUP_SVG;
+window.addEventListener("scroll", () => { $("smallTitle").style.opacity = window.scrollY > 40 ? 1 : 0; }, { passive: true });
+$("smallTitle").textContent = "Kaffee-Tagebuch";
+
+// ================= Detail =================
+async function openDetail(id) {
+  currentId = id;
+  const e = entries.find((x) => x.id === id);
+  if (!e) return;
+  const d = new Date(e.date);
+  const r = ratio(e);
+  const rows = [];
+  if (e.coffeeGrams != null) rows.push(["Kaffee", fmtNum(e.coffeeGrams) + " g"]);
+  if (e.waterGrams != null) rows.push(["Wasser", fmtNum(e.waterGrams) + " g"]);
+  if (r != null) rows.push(["Verhältnis", "1 : " + fmtNum(r)]);
+  if (e.grindSize) rows.push(["Mahlgrad", e.grindSize]);
+  if (e.brewSeconds != null) rows.push(["Brühzeit", fmtTime(e.brewSeconds) + " min"]);
+  if (e.waterTempC != null) rows.push(["Temperatur", fmtNum(e.waterTempC) + " °C"]);
+
+  const photos = e.photoIds || [];
+  $("detailContent").innerHTML = `
+    ${photos.length ? `<div class="carousel" id="carousel"></div>` : ""}
+    <h1 class="detail-name serif">${esc(e.coffeeName)}</h1>
+    ${e.roaster ? `<div class="detail-roaster">${esc(e.roaster)}</div>` : ""}
+    <div class="detail-meta"><span class="stars" aria-label="${e.rating} von 5 Sternen">${starsHTML(e.rating)}</span><span class="date">${esc(fmtDateLong(d))}</span></div>
+    <div class="card">
+      <div class="card-title">Zubereitung</div>
+      <div class="method-line"><span style="width:22px;color:var(--caramel)">${CUP_SVG}</span>${esc(METHOD_TITLE[e.method] || "Sonstiges")}</div>
+      ${rows.length ? `<div class="divider"></div>` + rows.map(([k, v]) => `<div class="info"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("") : ""}
+    </div>
+    ${(e.flavorTags || []).length ? `<div class="card"><div class="card-title">Geschmack</div><div class="chips" style="padding:0">${e.flavorTags.map((t) => `<span class="chip on">${esc(TAG_TITLE[t] || t)}</span>`).join("")}</div></div>` : ""}
+    ${e.notes && e.notes.trim() ? `<div class="card"><div class="card-title">Notiz</div><div class="notes">${esc(e.notes)}</div></div>` : ""}
+    <button class="danger-btn" id="deleteBtn">Eintrag löschen</button>`;
+
+  if (photos.length) {
+    const box = $("carousel");
+    for (const pid of photos) {
+      const url = await photoURL(pid, "full");
+      if (url) { const img = document.createElement("img"); img.src = url; img.alt = "Foto"; box.appendChild(img); }
+    }
+  }
+  $("deleteBtn").onclick = () => dialog("Eintrag löschen?", "Der Eintrag und seine Fotos werden dauerhaft entfernt.", [
+    { label: "Löschen", style: "destructive", action: () => deleteEntry(e) },
+    { label: "Abbrechen" },
+  ]);
+  $("detailView").hidden = false;
+  $("detailView").scrollTop = 0;
+}
+$("detailBack").onclick = () => { $("detailView").hidden = true; currentId = null; };
+$("detailEdit").onclick = () => { const e = entries.find((x) => x.id === currentId); if (e) openEdit(e); };
+
+async function deleteEntry(e) {
+  for (const pid of e.photoIds || []) await deletePhoto(pid);
+  await dbDelete("entries", e.id);
+  await loadEntries();
+  $("detailView").hidden = true;
+  currentId = null;
+  renderList();
+}
+
+// ================= Formular =================
+$("fMethod").innerHTML = METHODS.map(([k, t]) => `<option value="${k}">${esc(t)}</option>`).join("");
+
+function openEdit(entry) {
+  original = entry;
+  draft = entry ? JSON.parse(JSON.stringify(entry)) : {
+    id: uuid(), date: new Date().toISOString(), coffeeName: "", roaster: "", method: "portafilter",
+    coffeeGrams: null, waterGrams: null, grindSize: "", brewSeconds: null, waterTempC: null,
+    rating: 3, flavorTags: [], notes: "", photoIds: [],
+  };
+  addedPhotos = [];
+  $("editTitle").textContent = entry ? "Bearbeiten" : "Neuer Kaffee";
+  $("fName").value = draft.coffeeName;
+  $("fRoaster").value = draft.roaster;
+  $("fDate").value = toLocalInput(new Date(draft.date));
+  $("fMethod").value = METHOD_TITLE[draft.method] ? draft.method : "other";
+  $("fCoffee").value = fmtNum(draft.coffeeGrams);
+  $("fWater").value = fmtNum(draft.waterGrams);
+  $("fGrind").value = draft.grindSize;
+  $("fTime").value = fmtTime(draft.brewSeconds);
+  $("fTemp").value = fmtNum(draft.waterTempC);
+  $("fNotes").value = draft.notes;
+  renderStars(); renderTags(); renderPhotos(); validate();
+  $("editView").hidden = false;
+  $("editView").scrollTop = 0;
+}
+
+function renderStars() {
+  $("fStars").innerHTML = [1, 2, 3, 4, 5].map((i) =>
+    `<button type="button" data-v="${i}" class="${i <= draft.rating ? "" : "off"}" aria-label="${i} von 5 Sternen">★</button>`).join("");
+}
+$("fStars").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  draft.rating = +b.dataset.v; renderStars();
+});
+
+function renderTags() {
+  $("fTags").innerHTML = TAGS.map(([k, t]) =>
+    `<button type="button" class="chip ${draft.flavorTags.includes(k) ? "on" : ""}" data-k="${k}" aria-pressed="${draft.flavorTags.includes(k)}">${esc(t)}</button>`).join("");
+}
+$("fTags").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const k = b.dataset.k;
+  draft.flavorTags = draft.flavorTags.includes(k) ? draft.flavorTags.filter((x) => x !== k) : [...draft.flavorTags, k];
+  renderTags();
+});
+
+async function renderPhotos() {
+  const strip = $("fPhotos");
+  strip.hidden = draft.photoIds.length === 0;
+  strip.innerHTML = draft.photoIds.map((id) =>
+    `<div class="ph" data-id="${esc(id)}"><button type="button" class="rm" data-rm="${esc(id)}" aria-label="Foto entfernen">✕</button></div>`).join("");
+  for (const el of strip.querySelectorAll(".ph")) {
+    const url = await photoURL(el.dataset.id, "thumb");
+    if (url) { const img = document.createElement("img"); img.src = url; img.alt = ""; el.prepend(img); }
+  }
+}
+$("fPhotos").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-rm]"); if (!b) return;
+  draft.photoIds = draft.photoIds.filter((x) => x !== b.dataset.rm);
+  renderPhotos();
+});
+$("addPhotoBtn").onclick = () => $("fileInput").click();
+$("fileInput").addEventListener("change", async (e) => {
+  const files = [...e.target.files];
+  e.target.value = "";
+  if (!files.length) return;
+  $("photoBusy").hidden = false; $("editSave").disabled = true;
+  for (const f of files) {
+    try {
+      const id = await savePhoto(f);
+      draft.photoIds.push(id); addedPhotos.push(id);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  $("photoBusy").hidden = true;
+  await renderPhotos();
+  validate();
+});
+
+function readForm() {
+  return {
+    coffeeGrams: parseNum($("fCoffee").value),
+    waterGrams: parseNum($("fWater").value),
+    waterTempC: parseNum($("fTemp").value),
+    brewSeconds: parseTime($("fTime").value),
+  };
+}
+function validate() {
+  const v = readForm();
+  $("fCoffee").classList.toggle("invalid", isBad(v.coffeeGrams));
+  $("fWater").classList.toggle("invalid", isBad(v.waterGrams));
+  $("fTemp").classList.toggle("invalid", isBad(v.waterTempC));
+  $("fTime").classList.toggle("invalid", isBad(v.brewSeconds));
+  const recipeOk = !Object.values(v).some(isBad);
+  $("recipeHint").hidden = recipeOk;
+  const ok = recipeOk && $("fName").value.trim() !== "" && $("photoBusy").hidden;
+  $("editSave").disabled = !ok;
+  return ok;
+}
+$("editForm").addEventListener("input", validate);
+
+$("editSave").onclick = async () => {
+  if (!validate()) return;
+  const v = readForm();
+  const dateVal = $("fDate").value ? new Date($("fDate").value) : new Date(draft.date);
+  const entry = {
+    ...draft,
+    coffeeName: $("fName").value.trim(),
+    roaster: $("fRoaster").value.trim(),
+    date: (isNaN(dateVal) ? new Date() : dateVal).toISOString(),
+    method: $("fMethod").value,
+    grindSize: $("fGrind").value.trim(),
+    notes: $("fNotes").value,
+    ...v,
+  };
+  const kept = new Set(entry.photoIds);
+  for (const id of [...(original ? original.photoIds || [] : []), ...addedPhotos]) {
+    if (!kept.has(id)) await deletePhoto(id);
+  }
+  await dbPut("entries", entry);
+  await loadEntries();
+  $("editView").hidden = true;
+  renderList();
+  if (currentId === entry.id) openDetail(entry.id);
+};
+
+$("editCancel").onclick = async () => {
+  for (const id of addedPhotos) await deletePhoto(id);
+  addedPhotos = [];
+  $("editView").hidden = true;
+};
+
+// ================= Export (Excel-kompatible CSV + Fotos) =================
+const CSV_HEADER = ["Datum", "Uhrzeit", "Sorte", "Röster", "Zubereitung", "Kaffee (g)", "Wasser (g)",
+  "Verhältnis (g Wasser je g Kaffee)", "Mahlgrad", "Brühzeit (Sek.)", "Temperatur (°C)",
+  "Bewertung (1-5)", "Geschmack", "Notiz", "Fotos"];
+const csvText = (s) => { s = String(s ?? ""); return /^[=+\-@]/.test(s) ? " " + s : s; };
+const csvCell = (s) => { s = String(s ?? ""); return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+
+async function buildExport() {
+  const files = [];
+  const rows = [CSV_HEADER];
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+  for (const e of sorted) {
+    const d = new Date(e.date);
+    const names = [];
+    for (const [i, pid] of (e.photoIds || []).entries()) {
+      const rec = await dbGet("photos", pid);
+      if (!rec) continue;
+      const name = `${fileStamp(d)}_${e.id.slice(0, 4)}_${i + 1}.jpg`;
+      files.push(new File([rec.full], name, { type: "image/jpeg" }));
+      names.push(name);
+    }
+    rows.push([
+      fmtDateShort(d), fmtClock(d), csvText(e.coffeeName), csvText(e.roaster),
+      METHOD_TITLE[e.method] || "Sonstiges", fmtNum(e.coffeeGrams), fmtNum(e.waterGrams), fmtNum(ratio(e)),
+      csvText(e.grindSize), e.brewSeconds ?? "", fmtNum(e.waterTempC), e.rating,
+      (e.flavorTags || []).map((t) => TAG_TITLE[t] || t).join(", "), csvText(e.notes), names.join(", "),
+    ]);
+  }
+  const csv = rows.map((r) => r.map(csvCell).join(";")).join("\r\n") + "\r\n";
+  const csvFile = new File(["﻿" + csv], `Kaffee-Tagebuch_${fileStamp(new Date())}.csv`, { type: "text/csv" });
+  return { csvFile, photoFiles: files };
+}
+
+function download(file) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(file);
+  a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+$("exportBtn").onclick = async () => {
+  if (!entries.length) return;
+  dialog("Export wird vorbereitet …", "", []);
+  let pack;
+  try { pack = await buildExport(); }
+  catch (err) { dialog("Export fehlgeschlagen", String(err.message || err), [{ label: "OK" }]); return; }
+
+  const all = [pack.csvFile, ...pack.photoFiles];
+  const canShareAll = navigator.canShare && navigator.canShare({ files: all });
+  const canShareCsv = navigator.canShare && navigator.canShare({ files: [pack.csvFile] });
+  const text = `${entries.length} Einträge` + (pack.photoFiles.length ? ` und ${pack.photoFiles.length} Fotos` : "") +
+    ". Tipp: „In Dateien sichern“ wählen und einen eigenen Ordner anlegen.";
+
+  const share = async (files) => {
+    try { await navigator.share({ files, title: "Kaffee-Tagebuch" }); }
+    catch (err) { if (err.name !== "AbortError") { download(pack.csvFile); } }
+  };
+
+  const buttons = [];
+  if (canShareAll) buttons.push({ label: pack.photoFiles.length ? "Tabelle + Fotos teilen" : "Tabelle teilen", style: "primary", action: () => share(all) });
+  if (pack.photoFiles.length && canShareCsv) buttons.push({ label: "Nur Tabelle teilen", action: () => share([pack.csvFile]) });
+  if (!canShareAll && !canShareCsv) buttons.push({ label: "Tabelle herunterladen", style: "primary", action: () => download(pack.csvFile) });
+  buttons.push({ label: "Abbrechen" });
+  dialog("Export bereit", text, buttons);
+};
+
+// ================= Start =================
+(async function start() {
+  try {
+    db = await openDB();
+    await loadEntries();
+  } catch (err) {
+    dialog("Speicher nicht verfügbar", "Die Einträge können in diesem Browser nicht gespeichert werden. Bitte die App in Safari öffnen (kein privater Modus).", [{ label: "OK" }]);
+  }
+  renderList();
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+})();
+</script>
+</body>
+</html>
