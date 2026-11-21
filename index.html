@@ -13,179 +13,234 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>Kaffee-Tagebuch</title>
 <style>
+  /* iOS-Optik: Systemschrift, gruppierte Listen, Haarlinien */
   :root {
-    --bg: #F6EFE6; --card: #FFFBF5; --text: #3B2A20; --muted: #7A6353;
-    --caramel: #A0612B; --caramel-soft: rgba(160, 97, 43, .13); --on-caramel: #FFFFFF;
-    --line: rgba(59, 42, 32, .12); --danger: #B3261E;
+    --bg: #F2F2F7; --card: #FFFFFF; --card2: #F2F2F7; --text: #000000;
+    --muted: rgba(60, 60, 67, .6); --faint: rgba(60, 60, 67, .3);
+    --sep: rgba(60, 60, 67, .29); --fill: rgba(118, 118, 128, .12);
+    --accent: #B5551F; --accent-soft: rgba(181, 85, 31, .12); --on-accent: #FFFFFF;
+    --danger: #FF3B30; --warn-bg: #FFF4E5; --bar: rgba(242, 242, 247, .8);
     color-scheme: light dark;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1C1411; --card: #2A1F19; --text: #F3E7D9; --muted: #BFA893;
-      --caramel: #D99A5B; --caramel-soft: rgba(217, 154, 91, .16); --on-caramel: #1C1411;
-      --line: rgba(243, 231, 217, .12); --danger: #FF8A80;
+      --bg: #000000; --card: #1C1C1E; --card2: #2C2C2E; --text: #FFFFFF;
+      --muted: rgba(235, 235, 245, .6); --faint: rgba(235, 235, 245, .3);
+      --sep: rgba(84, 84, 88, .65); --fill: rgba(118, 118, 128, .24);
+      --accent: #F29A52; --accent-soft: rgba(242, 154, 82, .16); --on-accent: #1C1008;
+      --danger: #FF453A; --warn-bg: #2E2216; --bar: rgba(0, 0, 0, .75);
     }
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    font-size: 17px; line-height: 1.4;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-text-size-adjust: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+    font-size: 17px; line-height: 1.29; letter-spacing: -0.41px;
+    -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
   }
-  .serif { font-family: ui-serif, "New York", Georgia, "Times New Roman", serif; }
-  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
-  input, select, textarea { font: inherit; font-size: 17px; color: var(--text); }
+  .serif { font-family: inherit; }
+  button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; letter-spacing: inherit; }
+  input, select, textarea { font: inherit; font-size: 17px; color: var(--text); letter-spacing: inherit; }
   svg { display: block; }
   [hidden] { display: none !important; }
 
-  /* ---------- Kopfzeile ---------- */
+  /* Navigationsleiste */
   .bar {
     position: sticky; top: 0; z-index: 5;
     display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: calc(env(safe-area-inset-top) + 8px) 16px 8px;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    padding: calc(env(safe-area-inset-top) + 4px) 8px 4px; min-height: 44px;
+    background: var(--bar); -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: .5px solid transparent; transition: border-color .2s;
   }
-  .bar .title { font-size: 17px; font-weight: 700; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .icon-btn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 22px; color: var(--caramel); }
-  .icon-btn:active { background: var(--caramel-soft); }
-  .icon-btn:disabled { opacity: .35; }
-  .text-btn { color: var(--caramel); font-size: 17px; padding: 10px 4px; min-width: 44px; }
+  .bar.scrolled, .screen .bar { border-bottom-color: var(--sep); }
+  .bar .title { font-size: 17px; font-weight: 600; text-align: center; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .icon-btn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 22px; color: var(--accent); }
+  .icon-btn:active { opacity: .4; }
+  .text-btn { color: var(--accent); font-size: 17px; padding: 11px 8px; min-width: 44px; }
+  .text-btn:active { opacity: .4; }
   .text-btn.strong { font-weight: 600; }
-  .text-btn:disabled { opacity: .35; }
+  .text-btn:disabled { opacity: .3; }
 
-  .page { padding: 0 16px calc(env(safe-area-inset-bottom) + 32px); max-width: 720px; margin: 0 auto; }
-  h1.big { font-size: 34px; margin: 4px 0 12px; font-weight: 700; letter-spacing: -.01em; }
+  .page { padding: 0 16px calc(env(safe-area-inset-bottom) + 40px); max-width: 720px; margin: 0 auto; }
+  h1.big { font-size: 34px; line-height: 41px; margin: 2px 0 0; font-weight: 700; letter-spacing: .37px; }
+  .status { font-size: 13px; color: var(--muted); margin: 2px 0 10px; min-height: 16px; letter-spacing: -0.08px; }
+  .status.warn { color: var(--text); background: var(--warn-bg); padding: 10px 12px; border-radius: 10px; }
 
-  /* ---------- Liste ---------- */
-  .search {
-    width: 100%; padding: 10px 14px; border-radius: 12px; border: 0;
-    background: var(--caramel-soft); margin-bottom: 14px; outline: none;
-  }
+  .search-wrap { position: relative; margin-bottom: 18px; }
+  .search-wrap svg { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .search { width: 100%; height: 36px; padding: 0 10px 0 30px; border-radius: 10px; border: 0; background: var(--fill); outline: none; -webkit-appearance: none; }
   .search::placeholder { color: var(--muted); }
-  .list { display: flex; flex-direction: column; gap: 10px; }
-  .row {
-    display: flex; gap: 12px; align-items: center; width: 100%; text-align: left;
-    padding: 10px; border-radius: 16px; background: var(--card);
-  }
-  .row:active { filter: brightness(.96); }
-  .thumb {
-    width: 60px; height: 60px; border-radius: 12px; flex: none; overflow: hidden;
-    background: var(--caramel-soft); color: var(--caramel); display: grid; place-items: center;
-  }
+
+  /* Gruppierte Listen */
+  .section-title { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: -0.08px; margin: 22px 16px 7px; }
+  .list-group, .group { background: var(--card); border-radius: 10px; overflow: hidden; }
+  .row { position: relative; display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; padding: 10px 12px 10px 16px; background: var(--card); }
+  .row:active { background: var(--card2); }
+  .row + .row::before { content: ""; position: absolute; top: 0; left: 88px; right: 0; height: .5px; background: var(--sep); }
+  .thumb { width: 60px; height: 60px; border-radius: 12px; flex: none; overflow: hidden; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
   .row-main { flex: 1; min-width: 0; }
-  .row-name { font-weight: 700; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row-sub { color: var(--muted); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .row-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
-  .row-date { color: var(--muted); font-size: 13px; }
-  .stars { color: var(--caramel); letter-spacing: 1px; font-size: 14px; }
-  .stars .off { opacity: .3; }
+  .row-name { font-weight: 600; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row-sub { color: var(--muted); font-size: 15px; letter-spacing: -0.24px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  .row-rates { display: flex; flex-wrap: wrap; gap: 3px 12px; margin-top: 4px; font-size: 13px; color: var(--muted); letter-spacing: -0.08px; align-items: center; }
+  .row-rates b { font-weight: 600; color: var(--text); margin-right: 3px; }
+  .chev { color: var(--faint); flex: none; }
+  .todo { color: var(--accent); font-weight: 600; }
+  .stars { display: inline-flex; gap: 1px; color: var(--accent); vertical-align: -2px; }
+  .stars .off { color: var(--faint); }
 
-  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-  .empty .cup { color: var(--caramel); margin: 0 auto 12px; width: 64px; }
-  .empty h2 { color: var(--text); margin: 0 0 6px; font-size: 22px; }
-  .primary {
-    background: var(--caramel); color: var(--on-caramel); font-weight: 600;
-    padding: 12px 20px; border-radius: 14px; margin-top: 16px;
-  }
-  .primary:active { filter: brightness(.92); }
+  .empty { text-align: center; padding: 56px 24px; color: var(--muted); font-size: 15px; }
+  .empty .logo { width: 88px; height: 88px; margin: 0 auto 16px; border-radius: 20px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+  .empty .logo img, .login .logo img { width: 100%; height: 100%; display: block; }
+  .empty h2 { color: var(--text); margin: 0 0 6px; font-size: 22px; font-weight: 700; letter-spacing: .35px; }
+  .primary { background: var(--accent); color: var(--on-accent); font-weight: 600; height: 50px; padding: 0 20px; border-radius: 12px; margin-top: 20px; }
+  .primary:active { opacity: .7; }
+  .primary:disabled { opacity: .4; }
 
-  /* ---------- Vollbild-Ansichten ---------- */
-  .screen {
-    position: fixed; inset: 0; z-index: 10; background: var(--bg);
-    overflow-y: auto; -webkit-overflow-scrolling: touch;
-    animation: slideIn .22s ease-out;
-  }
-  @keyframes slideIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .screen { position: fixed; inset: 0; z-index: 10; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch; animation: slideIn .25s cubic-bezier(.2,.8,.2,1); }
+  @keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .screen { animation: none; } }
 
-  .card { background: var(--card); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; }
-  .card-title { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--caramel); margin-bottom: 10px; }
-
   /* Detail */
-  .carousel { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 20px; margin-bottom: 16px; }
-  .carousel img { width: 100%; flex: none; height: 320px; object-fit: cover; scroll-snap-align: center; border-radius: 20px; }
-  .detail-name { font-size: 32px; font-weight: 700; margin: 0; line-height: 1.15; }
-  .detail-roaster { color: var(--muted); font-size: 20px; margin-top: 2px; }
-  .detail-meta { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 18px; }
-  .detail-meta .stars { font-size: 22px; }
-  .detail-meta .date { color: var(--muted); font-size: 15px; text-align: right; }
-  .info { display: flex; justify-content: space-between; padding: 6px 0; }
-  .info span:first-child { color: var(--muted); }
-  .info span:last-child { font-variant-numeric: tabular-nums; }
-  .method-line { font-weight: 600; display: flex; align-items: center; gap: 8px; }
-  .divider { height: 1px; background: var(--line); margin: 10px 0 4px; }
+  .carousel { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; border-radius: 12px; margin: 12px 0 16px; }
+  .carousel img { width: 100%; flex: none; height: 300px; object-fit: cover; scroll-snap-align: center; border-radius: 12px; }
+  .detail-head { padding: 12px 4px 0; }
+  .detail-name { font-size: 28px; line-height: 34px; font-weight: 700; margin: 0; letter-spacing: .36px; }
+  .detail-roaster { color: var(--muted); font-size: 17px; margin-top: 2px; }
+  .detail-meta { color: var(--muted); font-size: 13px; margin-top: 6px; letter-spacing: -0.08px; }
+  .cell { position: relative; padding: 12px 16px; }
+  .cell + .cell::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--sep); }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 11px 16px; position: relative; }
+  .kv + .kv::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--sep); }
+  .kv span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
   .notes { white-space: pre-wrap; }
-  .danger-btn { color: var(--danger); width: 100%; padding: 14px; border-radius: 14px; background: var(--card); font-weight: 600; }
+  .danger-cell { width: 100%; padding: 13px 16px; color: var(--danger); text-align: center; background: var(--card); border-radius: 10px; margin-top: 28px; }
+  .danger-cell:active, .action-cell:active { background: var(--card2); }
+  .action-cell { width: 100%; padding: 13px 16px; color: var(--accent); text-align: left; display: flex; align-items: center; gap: 10px; background: var(--card); }
 
-  /* Formular */
-  .group { background: var(--card); border-radius: 14px; margin-bottom: 8px; overflow: hidden; }
-  .group-label { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 18px 4px 6px; }
-  .field { display: flex; align-items: center; gap: 10px; padding: 0 16px; min-height: 48px; border-bottom: 1px solid var(--line); }
-  .field:last-child { border-bottom: 0; }
+  .rate-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .rate-who { font-weight: 600; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+  .rate-drink { font-size: 13px; padding: 2px 8px; border-radius: 6px; background: var(--fill); color: var(--muted); font-weight: 500; letter-spacing: -0.08px; }
+  .rate-stars { display: flex; gap: 3px; color: var(--accent); margin: 8px 0 4px; }
+  .rate-stars .off { color: var(--faint); }
+  .rate-date { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .rate-missing { color: var(--muted); font-size: 15px; }
+
+  /* Formulare */
+  .group-label { font-size: 13px; text-transform: uppercase; letter-spacing: -0.08px; color: var(--muted); margin: 24px 16px 7px; }
+  .field { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 16px; min-height: 44px; }
+  .field + .field::before, .scan-btn + .field::before, .scan-info + .field::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--sep); }
   .field label { flex: none; }
-  .field input, .field select, .field textarea {
-    flex: 1; min-width: 0; border: 0; background: transparent; outline: none; padding: 12px 0;
-  }
-  .field input.right, .field select.right { text-align: right; text-align-last: right; }
-  .field .unit { color: var(--muted); width: 28px; flex: none; }
-  .field textarea { resize: none; min-height: 90px; }
+  .field input, .field select, .field textarea { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; padding: 11px 0; -webkit-appearance: none; }
+  .field input.right, .field select.right { text-align: right; text-align-last: right; color: var(--muted); }
+  .field input.right:focus { color: var(--text); }
+  .field .unit { color: var(--muted); width: 30px; flex: none; }
+  .field textarea { resize: none; min-height: 96px; }
   .field.full input { font-weight: 600; }
   .invalid { color: var(--danger) !important; }
-  .hint { font-size: 13px; color: var(--danger); margin: 6px 4px 0; }
-  .star-pick { display: flex; gap: 6px; padding: 8px 12px; }
-  .star-pick button { font-size: 32px; width: 44px; height: 48px; color: var(--caramel); }
-  .star-pick button.off { opacity: .3; }
+  .hint { font-size: 13px; color: var(--danger); margin: 7px 16px 0; }
+  .star-pick { display: flex; gap: 4px; padding: 6px 10px; }
+  .star-pick button { width: 48px; height: 48px; display: grid; place-items: center; color: var(--accent); }
+  .star-pick button.off { color: var(--faint); }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; }
-  .chip { padding: 7px 13px; border-radius: 999px; background: var(--caramel-soft); font-size: 15px; }
-  .chip.on { background: var(--caramel); color: var(--on-caramel); }
-  .photo-strip { display: flex; gap: 10px; overflow-x: auto; padding: 12px 16px 4px; }
-  .photo-strip .ph { position: relative; flex: none; width: 92px; height: 92px; border-radius: 12px; overflow: hidden; background: var(--caramel-soft); }
+  .chip { padding: 6px 12px; border-radius: 16px; background: var(--fill); font-size: 15px; letter-spacing: -0.24px; }
+  .chip.on { background: var(--accent); color: var(--on-accent); }
+  .photo-strip { display: flex; gap: 10px; overflow-x: auto; padding: 12px 16px 6px; }
+  .photo-strip .ph { position: relative; flex: none; width: 88px; height: 88px; border-radius: 10px; overflow: hidden; background: var(--fill); }
   .photo-strip img { width: 100%; height: 100%; object-fit: cover; }
-  .photo-strip .rm {
-    position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 14px;
-    background: rgba(0,0,0,.6); color: #fff; display: grid; place-items: center; font-size: 16px; line-height: 1;
-  }
-  .add-photo { display: flex; align-items: center; gap: 10px; color: var(--caramel); padding: 14px 16px; width: 100%; text-align: left; }
-
-  /* Dialog */
-  .backdrop { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.4); display: grid; place-items: end center; padding: 16px; padding-bottom: calc(env(safe-area-inset-bottom) + 16px); }
-  .sheet { background: var(--card); border-radius: 20px; padding: 20px; width: 100%; max-width: 480px; text-align: center; }
-  .sheet h3 { margin: 0 0 6px; font-size: 20px; }
-  .sheet p { color: var(--muted); margin: 0 0 16px; font-size: 15px; }
-  .sheet .primary { width: 100%; margin-top: 0; }
-  .sheet .secondary { width: 100%; padding: 12px; margin-top: 8px; color: var(--caramel); font-weight: 600; }
-  .sheet .destructive { width: 100%; padding: 12px; border-radius: 14px; background: var(--danger); color: #fff; font-weight: 600; }
+  .photo-strip .rm { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 13px; background: rgba(0,0,0,.55); color: #fff; display: grid; place-items: center; font-size: 14px; line-height: 1; }
+  .add-photo { position: relative; display: flex; align-items: center; gap: 10px; color: var(--accent); padding: 12px 16px; width: 100%; text-align: left; }
+  .photo-strip + .add-photo::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--sep); }
   .busy { color: var(--muted); font-size: 15px; padding: 12px 16px; }
+  .scan-btn { display: flex; align-items: center; gap: 10px; color: var(--accent); padding: 12px 16px; width: 100%; text-align: left; }
+  .scan-info { position: relative; display: flex; gap: 12px; align-items: center; padding: 12px 16px; font-size: 15px; }
+  .scan-info::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; height: .5px; background: var(--sep); }
+  .scan-info img { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: #fff; flex: none; }
+  .scan-info .muted { color: var(--muted); font-size: 13px; }
+
+  #scanView { background: #000; color: #fff; animation: none; display: flex; flex-direction: column; }
+  #scanView .bar { background: transparent; color: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; }
+  #scanView .text-btn { color: #fff; }
+  .scan-stage { position: relative; flex: 1; overflow: hidden; }
+  .scan-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .scan-frame { position: absolute; left: 10%; right: 10%; top: 38%; height: 22%; border: 2px solid #fff; border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,.5); }
+  .scan-hint { position: absolute; left: 0; right: 0; top: calc(60% + 16px); text-align: center; font-size: 15px; padding: 0 24px; }
+  .scan-actions { display: flex; flex-direction: column; gap: 8px; padding: 16px; padding-bottom: calc(env(safe-area-inset-bottom) + 16px); }
+  .scan-actions button { color: #fff; height: 50px; border-radius: 12px; background: rgba(255,255,255,.16); font-weight: 600; }
+
+  /* Anmeldung */
+  .login { max-width: 420px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 56px) 16px 40px; text-align: center; }
+  .login .logo { width: 100px; height: 100px; margin: 0 auto 18px; border-radius: 23px; overflow: hidden; box-shadow: 0 8px 28px rgba(0,0,0,.22); }
+  .login h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px; letter-spacing: .36px; }
+  .login p { color: var(--muted); margin: 0 16px 24px; font-size: 15px; }
+  .login .group { text-align: left; }
+  .login .primary { width: 100%; }
+  .login .err { color: var(--danger); font-size: 15px; margin-top: 14px; min-height: 20px; }
+
+  /* Aktionsblatt (wie iOS) */
+  .backdrop { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.35); display: flex; align-items: flex-end; justify-content: center; padding: 8px; padding-bottom: calc(env(safe-area-inset-bottom) + 8px); }
+  .sheet-wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; max-height: 92vh; }
+  .sheet { background: color-mix(in srgb, var(--card) 94%, transparent); -webkit-backdrop-filter: blur(30px); backdrop-filter: blur(30px); border-radius: 14px; overflow-y: auto; text-align: center; }
+  .sheet-head { padding: 14px 16px 12px; }
+  .sheet h3 { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: -0.08px; }
+  .sheet p { color: var(--muted); margin: 4px 0 0; font-size: 13px; white-space: pre-line; letter-spacing: -0.08px; }
+  .sheet-head:empty, .sheet-head.blank { display: none; }
+  .sheet button { display: block; width: 100%; height: 57px; font-size: 20px; color: var(--accent); border-top: .5px solid var(--sep); letter-spacing: .38px; }
+  .sheet button:active { background: var(--fill); }
+  .sheet button.primary-act { font-weight: 600; }
+  .sheet button.destructive { color: var(--danger); }
+  .sheet.cancel button { border-top: 0; font-weight: 600; }
+  .sheet-head.blank + button, .sheet-head[hidden] + div button:first-child { border-top: 0; }
 </style>
 </head>
 <body>
 
+<!-- ============ Anmeldung ============ -->
+<div id="loginView" hidden>
+  <div class="login">
+    <div class="logo"><img src="icon-512.png" alt=""></div>
+    <h1 class="serif">Kaffee-Tagebuch</h1>
+    <div id="loginStep">
+      <p>Melde dich mit den Zugangsdaten an, die in Supabase angelegt wurden.</p>
+      <div class="group">
+        <div class="field"><input id="lEmail" type="email" autocomplete="username" placeholder="E-Mail" aria-label="E-Mail" autocapitalize="off"></div>
+        <div class="field"><input id="lPass" type="password" autocomplete="current-password" placeholder="Passwort" aria-label="Passwort"></div>
+      </div>
+      <button class="primary" id="loginBtn">Anmelden</button>
+    </div>
+    <div id="nameStep" hidden>
+      <p>Wie heißt du? Unter diesem Namen sieht der andere deine Bewertungen.</p>
+      <div class="group"><div class="field"><input id="lName" placeholder="Vorname" aria-label="Vorname" autocomplete="given-name"></div></div>
+      <button class="primary" id="nameBtn">Weiter</button>
+    </div>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
 <!-- ============ Liste ============ -->
-<div id="listView">
+<div id="listView" hidden>
   <div class="bar">
-    <button class="icon-btn" id="exportBtn" aria-label="Exportieren">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+    <button class="icon-btn" id="menuBtn" aria-label="Menü">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="8" cy="12" r=".6" fill="currentColor"/><circle cx="12" cy="12" r=".6" fill="currentColor"/><circle cx="16" cy="12" r=".6" fill="currentColor"/></svg>
     </button>
-    <span class="title" id="smallTitle" style="opacity:0"></span>
-    <button class="icon-btn" id="newBtn" aria-label="Neuer Eintrag">
+    <span class="title serif" id="smallTitle" style="opacity:0">Kaffee-Tagebuch</span>
+    <button class="icon-btn" id="newBtn" aria-label="Neuen Kaffee anlegen">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
     </button>
   </div>
   <main class="page">
     <h1 class="big serif">Kaffee-Tagebuch</h1>
-    <input class="search" id="search" type="search" placeholder="Sorte, Röster, Notiz …" autocomplete="off" hidden>
-    <div class="list" id="list"></div>
+    <div class="status" id="status"></div>
+    <div class="search-wrap" id="searchWrap" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="search" id="search" type="search" placeholder="Suchen" autocomplete="off"></div>
+    <div class="list-group" id="list"></div>
     <div class="empty" id="empty" hidden>
-      <div class="cup" id="emptyCup"></div>
-      <h2 class="serif">Noch keine Einträge</h2>
-      <div>Halte deinen ersten Kaffee fest – mit Rezept, Bewertung und Foto.</div>
-      <button class="primary" id="firstBtn">Ersten Kaffee eintragen</button>
+      <div class="logo"><img src="icon-512.png" alt=""></div>
+      <h2 class="serif">Noch keine Kaffees</h2>
+      <div>Lege einen Kaffee an – danach könnt ihr ihn beide bewerten.</div>
+      <button class="primary" id="firstBtn">Ersten Kaffee anlegen</button>
     </div>
     <div class="empty" id="noResults" hidden>Keine Treffer.</div>
+    <div class="status" id="footNote" style="text-align:center;margin-top:14px"></div>
   </main>
 </div>
 
@@ -199,7 +254,7 @@
   <div class="page" id="detailContent"></div>
 </div>
 
-<!-- ============ Bearbeiten ============ -->
+<!-- ============ Kaffee anlegen / bearbeiten ============ -->
 <div class="screen" id="editView" hidden>
   <div class="bar">
     <button class="text-btn" id="editCancel">Abbrechen</button>
@@ -209,9 +264,13 @@
   <form class="page" id="editForm" autocomplete="off" onsubmit="return false">
     <div class="group-label">Kaffee</div>
     <div class="group">
+      <button type="button" class="scan-btn" id="scanBtn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>
+        Barcode scannen
+      </button>
+      <div class="scan-info" id="scanInfo" hidden></div>
       <div class="field full"><input id="fName" placeholder="Sorte / Bohne" aria-label="Sorte / Bohne"></div>
       <div class="field"><input id="fRoaster" placeholder="Röster (optional)" aria-label="Röster"></div>
-      <div class="field"><label for="fDate">Datum</label><input id="fDate" type="datetime-local" class="right"></div>
     </div>
 
     <div class="group-label">Zubereitung</div>
@@ -224,18 +283,14 @@
       <div class="field"><label for="fCoffee">Kaffee</label><input id="fCoffee" class="right" inputmode="decimal" placeholder="18"><span class="unit">g</span></div>
       <div class="field"><label for="fWater">Wasser</label><input id="fWater" class="right" inputmode="decimal" placeholder="250"><span class="unit">g</span></div>
       <div class="field"><label for="fGrind">Mahlgrad</label><input id="fGrind" class="right" placeholder="z. B. 18 oder fein"></div>
-      <div class="field"><label for="fTime">Brühzeit</label><input id="fTime" class="right" inputmode="text" placeholder="m:ss"><span class="unit">min</span></div>
+      <div class="field"><label for="fTime">Brühzeit</label><input id="fTime" class="right" inputmode="numeric" placeholder="28"><span class="unit">s</span></div>
       <div class="field"><label for="fTemp">Temperatur</label><input id="fTemp" class="right" inputmode="decimal" placeholder="93"><span class="unit">°C</span></div>
     </div>
-    <div class="hint" id="recipeHint" hidden>Bitte nur Zahlen eingeben. Brühzeit als 3:30 oder in Sekunden, z. B. 28.</div>
+    <div class="hint" id="recipeHint" hidden>Bitte nur Zahlen eingeben. Brühzeit in Sekunden, z. B. 28.</div>
 
-    <div class="group-label">Bewertung</div>
-    <div class="group"><div class="star-pick" id="fStars"></div></div>
-
-    <div class="group-label">Geschmack</div>
+    <div class="group-label">Beschreibung (für beide sichtbar)</div>
     <div class="group">
-      <div class="chips" id="fTags"></div>
-      <div class="field"><textarea id="fNotes" placeholder="Notiz" aria-label="Notiz"></textarea></div>
+      <div class="field"><textarea id="fDesc" placeholder="z. B. Herkunft, Röstgrad, wo gekauft" aria-label="Beschreibung"></textarea></div>
     </div>
 
     <div class="group-label">Fotos</div>
@@ -251,56 +306,116 @@
   </form>
 </div>
 
+<!-- ============ Meine Bewertung ============ -->
+<div class="screen" id="rateView" hidden>
+  <div class="bar">
+    <button class="text-btn" id="rateCancel">Abbrechen</button>
+    <span class="title serif">Meine Bewertung</span>
+    <button class="text-btn strong" id="rateSave">Sichern</button>
+  </div>
+  <form class="page" id="rateForm" autocomplete="off" onsubmit="return false">
+    <h2 class="serif" id="rateCoffee" style="margin:8px 4px 0;font-size:24px"></h2>
+
+    <div class="group-label">Getränk</div>
+    <div class="group">
+      <div class="field"><label for="rDrink">Bewertet als</label><select id="rDrink" class="right"></select></div>
+    </div>
+
+    <div class="group-label">Sterne</div>
+    <div class="group"><div class="star-pick" id="rStars"></div></div>
+
+    <div class="group-label">Geschmack</div>
+    <div class="group">
+      <div class="chips" id="rTags"></div>
+      <div class="field"><textarea id="rNotes" placeholder="Meine Notiz" aria-label="Meine Notiz"></textarea></div>
+    </div>
+    <div class="hint" id="rateHint" style="color:var(--muted)">Bitte Getränk und Sterne wählen.</div>
+    <button type="button" class="danger-cell" id="rateDelete" hidden>Meine Bewertung löschen</button>
+  </form>
+</div>
+
+<!-- ============ Barcode-Scanner ============ -->
+<div class="screen" id="scanView" hidden>
+  <div class="bar">
+    <button class="text-btn" id="scanCancel">Abbrechen</button>
+    <span class="title">Barcode scannen</span>
+    <span style="width:44px"></span>
+  </div>
+  <div class="scan-stage">
+    <video id="scanVideo" playsinline muted autoplay></video>
+    <div class="scan-frame"></div>
+    <div class="scan-hint" id="scanHint">Halte den Strichcode der Kaffeepackung in den Rahmen.</div>
+  </div>
+  <div class="scan-actions">
+    <button type="button" id="scanPhotoBtn">Stattdessen Foto vom Barcode aufnehmen</button>
+    <button type="button" id="scanTypeBtn">Nummer eintippen</button>
+  </div>
+  <input type="file" id="scanPhotoInput" accept="image/*" capture="environment" hidden>
+</div>
+
+<input type="file" id="restoreInput" accept=".csv,.json,text/csv,text/comma-separated-values,application/json" hidden>
+
 <!-- ============ Dialog ============ -->
 <div class="backdrop" id="dialog" hidden>
-  <div class="sheet" role="dialog" aria-modal="true">
-    <h3 class="serif" id="dlgTitle"></h3>
-    <p id="dlgText"></p>
-    <div id="dlgButtons"></div>
+  <div class="sheet-wrap" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <div class="sheet-head" id="dlgHead"><h3 id="dlgTitle"></h3><p id="dlgText"></p></div>
+      <div id="dlgButtons"></div>
+    </div>
+    <div class="sheet cancel" id="dlgCancelWrap" hidden><div id="dlgCancel"></div></div>
   </div>
 </div>
 
+<script src="config.js"></script>
+<script src="supabase.js"></script>
 <script>
 "use strict";
 
 // ================= Stammdaten =================
 const METHODS = [
-  ["portafilter", "Siebträger"],
-  ["filter", "Filter / V60"],
-  ["frenchPress", "French Press"],
-  ["aeroPress", "AeroPress"],
-  ["fullyAutomatic", "Vollautomat"],
-  ["mokaPot", "Mokka-Kanne"],
-  ["cold", "Kaltgetränk"],
-  ["other", "Sonstiges"],
+  ["portafilter", "Siebträger"], ["filter", "Filter / V60"], ["frenchPress", "French Press"],
+  ["aeroPress", "AeroPress"], ["fullyAutomatic", "Vollautomat"], ["mokaPot", "Mokka-Kanne"],
+  ["cold", "Kaltgetränk"], ["other", "Sonstiges"],
 ];
 const METHOD_TITLE = Object.fromEntries(METHODS);
 
+const DRINKS = [
+  ["espresso", "Espresso"], ["doppio", "Doppio"], ["ristretto", "Ristretto"], ["lungo", "Lungo"],
+  ["cappuccino", "Cappuccino"], ["latteMacchiato", "Latte Macchiato"], ["flatWhite", "Flat White"],
+  ["cortado", "Cortado"], ["cafeCrema", "Café Crema / Kaffee"], ["americano", "Americano"],
+  ["milchkaffee", "Milchkaffee"], ["filterkaffee", "Filterkaffee"], ["eiskaffee", "Eiskaffee"], ["other", "Sonstiges"],
+];
+const DRINK_TITLE = Object.fromEntries(DRINKS);
+
 const TAGS = [
-  ["chocolate", "schokoladig"], ["nutty", "nussig"], ["fruity", "fruchtig"],
-  ["floral", "blumig"], ["caramel", "karamellig"], ["spicy", "würzig"],
-  ["bitter", "bitter"], ["sour", "sauer"], ["mild", "mild"], ["strong", "kräftig"],
+  ["chocolate", "schokoladig"], ["nutty", "nussig"], ["fruity", "fruchtig"], ["floral", "blumig"],
+  ["caramel", "karamellig"], ["spicy", "würzig"], ["bitter", "bitter"], ["sour", "sauer"],
+  ["mild", "mild"], ["strong", "kräftig"],
 ];
 const TAG_TITLE = Object.fromEntries(TAGS);
 
+const STAR_PATH = "M12 2.6l2.85 6.03 6.6.78-4.88 4.53 1.3 6.53L12 17.2l-5.87 3.27 1.3-6.53L2.55 9.41l6.6-.78z";
+const starIcons = (r, size) => [1, 2, 3, 4, 5].map((i) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" class="${i <= r ? "" : "off"}"><path fill="currentColor" d="${STAR_PATH}"/></svg>`).join("");
+const CHEVRON = `<svg class="chev" width="9" height="15" viewBox="0 0 9 15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 1.5 7.5 7.5 1.5 13.5"/></svg>`;
+const BEAN_SVG = `<svg viewBox="0 0 24 24" width="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><g transform="rotate(-32 12 12)"><ellipse cx="12" cy="12" rx="5.6" ry="8"/><path d="M12 4.4c-2.2 3.4 2.4 6.4 0 8.8-2 2.2 1.3 4.3 0 6.4"/></g></svg>`;
 const CUP_SVG = `<svg viewBox="0 0 24 24" width="100%" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3c-.6.8-.6 1.7 0 2.5M12 3c-.6.8-.6 1.7 0 2.5"/><path d="M3 21h16"/></svg>`;
 
 // ================= Hilfsfunktionen =================
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "id-" + Date.now() + "-" + Math.random().toString(16).slice(2));
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16)));
+const nowISO = () => new Date().toISOString();
 
 const numFmt = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1, useGrouping: false });
-const fmtNum = (v) => (v == null ? "" : numFmt.format(v));
+const fmtNum = (v) => (v == null || v === "" ? "" : numFmt.format(Number(v)));
 function parseNum(text) {
   const t = String(text).trim().replace(",", ".");
   if (!t) return null;
   const n = Number(t);
   return Number.isFinite(n) ? n : NaN;
 }
-const fmtTime = (s) => (s == null ? "" : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
-function parseTime(text) {
-  const t = String(text).trim().replace(/[.,]/g, ":");
+function parseSeconds(text) {
+  const t = String(text).trim().replace(/\s*(s|sek\.?|sec)$/i, "");
   if (!t) return null;
   const parts = t.split(":");
   if (parts.length === 2 && /^\d+$/.test(parts[0]) && /^\d{1,2}$/.test(parts[1]) && +parts[1] < 60) return +parts[0] * 60 + +parts[1];
@@ -312,22 +427,27 @@ const isBad = (v) => typeof v === "number" && Number.isNaN(v);
 const pad = (n) => String(n).padStart(2, "0");
 const fmtDateShort = (d) => `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 const fmtClock = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const fmtDateLong = (d) => d.toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" }) + ", " + fmtClock(d) + " Uhr";
-const toLocalInput = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmtDateLong = (d) => d.toLocaleDateString("de-DE", { day: "numeric", month: "long", year: "numeric" });
 const fileStamp = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+const starsHTML = (r, size = 13) => `<span class="stars" role="img" aria-label="${r} von 5 Sternen">${starIcons(r, size)}</span>`;
+const ratioOf = (c) => (c.coffee_grams > 0 && c.water_grams != null ? c.water_grams / c.coffee_grams : null);
 
-const starsHTML = (r) => "★".repeat(r) + `<span class="off">${"★".repeat(5 - r)}</span>`;
-const ratio = (e) => (e.coffeeGrams > 0 && e.waterGrams != null ? e.waterGrams / e.coffeeGrams : null);
-
-// ================= Speicher (IndexedDB) =================
+// ================= Lokaler Speicher (IndexedDB) =================
 let db;
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open("kaffee-tagebuch", 1);
+    const req = indexedDB.open("kaffee-tagebuch", 2);
     req.onupgradeneeded = () => {
       const d = req.result;
-      if (!d.objectStoreNames.contains("entries")) d.createObjectStore("entries", { keyPath: "id" });
-      if (!d.objectStoreNames.contains("photos")) d.createObjectStore("photos", { keyPath: "id" });
+      const ensure = (name, opts) => { if (!d.objectStoreNames.contains(name)) d.createObjectStore(name, opts); };
+      ensure("entries", { keyPath: "id" });   // alte Einträge (nur noch zum Übernehmen)
+      ensure("photos", { keyPath: "id" });    // alte Fotos
+      ensure("coffees", { keyPath: "id" });
+      ensure("ratings", { keyPath: "id" });
+      ensure("profiles", { keyPath: "id" });
+      ensure("pics", { keyPath: "path" });
+      ensure("outbox", { keyPath: "seq", autoIncrement: true });
+      ensure("meta", { keyPath: "key" });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -344,17 +464,22 @@ function run(store, mode, fn) {
     t.onabort = () => reject(t.error);
   });
 }
-const dbAll = (store) => run(store, "readonly", (s) => s.getAll());
-const dbGet = (store, id) => run(store, "readonly", (s) => s.get(id));
-const dbPut = (store, value) => run(store, "readwrite", (s) => s.put(value));
-const dbDelete = (store, id) => run(store, "readwrite", (s) => s.delete(id));
+const dbAll = (s) => run(s, "readonly", (o) => o.getAll());
+const dbGet = (s, k) => run(s, "readonly", (o) => o.get(k));
+const dbPut = (s, v) => run(s, "readwrite", (o) => o.put(v));
+const dbDelete = (s, k) => run(s, "readwrite", (o) => o.delete(k));
+const dbClear = (s) => run(s, "readwrite", (o) => o.clear());
+const dbReplace = (s, rows) => run(s, "readwrite", (o) => { o.clear(); for (const r of rows) o.put(r); });
+const metaGet = async (k) => { const r = await dbGet("meta", k); return r ? r.value : null; };
+const metaSet = (k, value) => dbPut("meta", { key: k, value });
 
 // ================= Fotos =================
-const urlCache = new Map(); // "thumb:id" / "full:id" -> objectURL
+const urlCache = new Map();
+const downloads = new Map();
 
-function loadImage(file) {
+function loadImage(blob) {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Bild konnte nicht gelesen werden")); };
@@ -369,218 +494,504 @@ function scaleToJpeg(img, maxSide, quality) {
   c.getContext("2d").drawImage(img, 0, 0, w, h);
   return new Promise((resolve) => c.toBlob((b) => resolve(b), "image/jpeg", quality));
 }
-async function savePhoto(file) {
+async function storePic(path, fullBuf) {
+  const img = await loadImage(new Blob([fullBuf], { type: "image/jpeg" }));
+  const thumb = await scaleToJpeg(img, 300, 0.8);
+  await dbPut("pics", { path, full: fullBuf, thumb: await thumb.arrayBuffer() });
+}
+async function addPhotoFile(file, coffeeId) {
   const img = await loadImage(file);
   const full = await scaleToJpeg(img, 1600, 0.85);
   const thumb = await scaleToJpeg(img, 300, 0.8);
-  const id = uuid();
-  await dbPut("photos", { id, full: await full.arrayBuffer(), thumb: await thumb.arrayBuffer() });
-  return id;
+  const path = `${coffeeId}/${uuid()}.jpg`;
+  await dbPut("pics", { path, full: await full.arrayBuffer(), thumb: await thumb.arrayBuffer() });
+  return path;
 }
-async function photoURL(id, kind) {
-  const key = kind + ":" + id;
+async function picURL(path, kind) {
+  const key = kind + ":" + path;
   if (urlCache.has(key)) return urlCache.get(key);
-  const rec = await dbGet("photos", id);
+  let rec = await dbGet("pics", path);
+  if (!rec && sb && navigator.onLine) {
+    if (!downloads.has(path)) {
+      downloads.set(path, (async () => {
+        const { data, error } = await sb.storage.from("photos").download(path);
+        if (!error && data) await storePic(path, await data.arrayBuffer());
+      })().catch(() => {}).finally(() => downloads.delete(path)));
+    }
+    await downloads.get(path);
+    rec = await dbGet("pics", path);
+  }
   if (!rec) return null;
   const url = URL.createObjectURL(new Blob([rec[kind]], { type: "image/jpeg" }));
   urlCache.set(key, url);
   return url;
 }
-async function deletePhoto(id) {
-  for (const k of ["thumb:" + id, "full:" + id]) {
+async function dropLocalPic(path) {
+  for (const k of ["thumb:" + path, "full:" + path]) {
     if (urlCache.has(k)) { URL.revokeObjectURL(urlCache.get(k)); urlCache.delete(k); }
   }
-  await dbDelete("photos", id);
+  await dbDelete("pics", path);
 }
 
 // ================= Zustand =================
-let entries = [];
-let currentId = null;     // Detailansicht
-let draft = null;         // Formular
-let original = null;
-let addedPhotos = [];
+const CFG = window.KAFFEE_CONFIG || {};
+let sb = null;
+let me = null;              // { id, email }
+let coffees = [], ratings = [], profiles = {};
+let syncing = false, syncAgain = false, lastSync = null, syncError = null, rejected = 0;
+let currentId = null;
 
-async function loadEntries() {
-  entries = (await dbAll("entries")).sort((a, b) => b.date.localeCompare(a.date));
+const nameOf = (uid) => (profiles[uid] && profiles[uid].display_name) || (me && uid === me.id ? "Ich" : "Partner/in");
+const ratingsFor = (cid) => ratings.filter((r) => r.coffee_id === cid);
+const myRating = (cid) => ratings.find((r) => r.coffee_id === cid && me && r.user_id === me.id);
+
+async function refreshState() {
+  coffees = (await dbAll("coffees")).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  ratings = await dbAll("ratings");
+  profiles = Object.fromEntries((await dbAll("profiles")).map((p) => [p.id, p]));
+}
+
+// ================= Abgleich mit Supabase =================
+async function queue(op) { await dbPut("outbox", op); }
+
+function isRejection(err) {
+  // Vom Server abgelehnt (z. B. Regelverstoß) – erneutes Senden hilft nicht.
+  const code = String((err && (err.code || err.statusCode || err.status)) || "");
+  return /^(22|23|42|PGRST|400|403|409|413|422)/.test(code);
+}
+
+async function runOp(op) {
+  let res;
+  if (op.op === "upsert") res = await sb.from(op.table).upsert(op.row);
+  else if (op.op === "delete") res = await sb.from(op.table).delete().eq("id", op.id);
+  else if (op.op === "upload") {
+    const rec = await dbGet("pics", op.path);
+    if (!rec) return;
+    res = await sb.storage.from("photos").upload(op.path, new Blob([rec.full], { type: "image/jpeg" }), { contentType: "image/jpeg", upsert: true });
+  } else if (op.op === "remove") res = await sb.storage.from("photos").remove([op.path]);
+  if (res && res.error) throw res.error;
+}
+
+async function flushOutbox() {
+  const ops = await dbAll("outbox");
+  for (const op of ops) {
+    try {
+      await runOp(op);
+    } catch (err) {
+      if (!isRejection(err)) throw err;
+      console.warn("Vom Server abgelehnt:", op, err);
+      rejected++;
+    }
+    await dbDelete("outbox", op.seq);
+  }
+}
+
+async function pullAll() {
+  const [c, r, p] = await Promise.all([
+    sb.from("coffees").select("*"),
+    sb.from("ratings").select("*"),
+    sb.from("profiles").select("*"),
+  ]);
+  for (const x of [c, r, p]) if (x.error) throw x.error;
+  await dbReplace("coffees", c.data);
+  await dbReplace("ratings", r.data);
+  await dbReplace("profiles", p.data);
+  // Änderungen, die während des Abrufs entstanden sind, wieder darüberlegen.
+  for (const op of await dbAll("outbox")) {
+    if (op.op === "upsert") await dbPut(op.table, op.row);
+    if (op.op === "delete") await dbDelete(op.table, op.id);
+  }
+}
+
+async function sync() {
+  if (!sb || !me) return;
+  if (syncing) { syncAgain = true; return; }
+  syncing = true;
+  renderStatus();
+  try {
+    await flushOutbox();
+    await pullAll();
+    syncError = null;
+    lastSync = new Date();
+  } catch (err) {
+    console.warn("Abgleich fehlgeschlagen", err);
+    syncError = err;
+  } finally {
+    syncing = false;
+    await refreshState();
+    renderAll();
+    if (syncAgain) { syncAgain = false; sync(); }
+  }
+}
+
+async function pendingCount() { return (await dbAll("outbox")).length; }
+
+async function renderStatus() {
+  const el = $("status");
+  const pending = await pendingCount();
+  el.classList.remove("warn");
+  if (syncing) { el.textContent = "Wird abgeglichen …"; return; }
+  if (syncError) {
+    el.classList.add("warn");
+    el.textContent = (navigator.onLine ? "Keine Verbindung zum gemeinsamen Speicher (evtl. ist das Supabase-Projekt pausiert)." : "Offline.") +
+      (pending ? ` ${pending} Änderung${pending === 1 ? "" : "en"} warten und werden später übertragen.` : " Alles ist auf dem iPhone gespeichert.");
+    return;
+  }
+  let t = lastSync ? `Abgeglichen um ${fmtClock(lastSync)}` : "";
+  if (pending) t += ` · ${pending} Änderung${pending === 1 ? "" : "en"} warten`;
+  if (rejected) t += ` · ${rejected} Änderung${rejected === 1 ? " wurde" : "en wurden"} vom Server abgelehnt`;
+  el.textContent = t;
 }
 
 // ================= Dialog =================
 function dialog(title, text, buttons) {
   $("dlgTitle").textContent = title;
   $("dlgText").textContent = text;
-  const box = $("dlgButtons");
-  box.innerHTML = "";
+  $("dlgHead").classList.toggle("blank", !title && !text);
+  const box = $("dlgButtons"), cancelBox = $("dlgCancel");
+  box.innerHTML = ""; cancelBox.innerHTML = "";
+  let hasCancel = false;
   for (const b of buttons) {
     const el = document.createElement("button");
-    el.className = b.style || "secondary";
+    const isCancel = /^(Abbrechen|Schließen|OK)$/.test(b.label) && b.style !== "primary";
+    el.className = b.style === "primary" ? "primary-act" : b.style === "destructive" ? "destructive" : "";
     el.textContent = b.label;
-    el.onclick = () => { if (!b.keepOpen) closeDialog(); b.action && b.action(); };
-    box.appendChild(el);
+    el.onclick = () => { closeDialog(); b.action && b.action(); };
+    (isCancel ? cancelBox : box).appendChild(el);
+    if (isCancel) hasCancel = true;
   }
+  $("dlgCancelWrap").hidden = !hasCancel;
   $("dialog").hidden = false;
 }
 const closeDialog = () => { $("dialog").hidden = true; };
-$("dialog").addEventListener("click", (e) => { if (e.target.id === "dialog") closeDialog(); });
+$("dialog").addEventListener("click", (e) => { if (e.target.id === "dialog" && ($("dlgButtons").children.length || $("dlgCancel").children.length)) closeDialog(); });
+
+// ================= Anmeldung =================
+
+function showLogin() {
+  $("listView").hidden = true;
+  for (const v of ["detailView", "editView", "rateView", "scanView"]) $(v).hidden = true;
+  $("loginView").hidden = false;
+  $("loginStep").hidden = false;
+  $("nameStep").hidden = true;
+  $("loginErr").textContent = "";
+}
+
+$("loginBtn").onclick = async () => {
+  const email = $("lEmail").value.trim(), password = $("lPass").value;
+  if (!email || !password) { $("loginErr").textContent = "Bitte E-Mail und Passwort eingeben."; return; }
+  $("loginBtn").disabled = true; $("loginErr").textContent = "";
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    await afterLogin(data.user);
+  } catch (err) {
+    const msg = String((err && err.message) || err);
+    $("loginErr").textContent = /invalid login|invalid_credentials/i.test(msg) ? "E-Mail oder Passwort stimmt nicht."
+      : /fetch|network/i.test(msg) ? "Keine Verbindung. Bitte Internet prüfen." : "Anmeldung fehlgeschlagen: " + msg;
+  } finally { $("loginBtn").disabled = false; }
+};
+$("lPass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn").click(); });
+
+$("nameBtn").onclick = async () => {
+  const name = $("lName").value.trim();
+  if (!name) { $("loginErr").textContent = "Bitte einen Namen eingeben."; return; }
+  const row = { id: me.id, display_name: name, updated_at: nowISO() };
+  await dbPut("profiles", row);
+  await queue({ op: "upsert", table: "profiles", row });
+  await refreshState();
+  showMain();
+  sync().then(maybeMigrate);
+};
+
+async function afterLogin(user) {
+  me = { id: user.id, email: user.email };
+  const lastUser = await metaGet("lastUser");
+  if (lastUser && lastUser !== me.id) {
+    // Anderer Benutzer auf diesem Gerät: lokale Kopie verwerfen.
+    for (const s of ["coffees", "ratings", "profiles", "outbox"]) await dbClear(s);
+  }
+  await metaSet("lastUser", me.id);
+  await refreshState();
+  if (profiles[me.id]) {
+    // Sofort die lokale Kopie zeigen, im Hintergrund abgleichen.
+    showMain();
+    sync().then(maybeMigrate);
+    return;
+  }
+  await sync();
+  if (!profiles[me.id]) {
+    $("loginView").hidden = false; $("listView").hidden = true;
+    $("loginStep").hidden = true; $("nameStep").hidden = false; $("loginErr").textContent = "";
+    return;
+  }
+  showMain();
+  maybeMigrate();
+}
+
+function showMain() {
+  $("loginView").hidden = true;
+  $("listView").hidden = false;
+  renderAll();
+}
+
+async function logout() {
+  const pending = await pendingCount();
+  const doIt = async () => {
+    await sb.auth.signOut().catch(() => {});
+    for (const s of ["coffees", "ratings", "profiles", "outbox"]) await dbClear(s);
+    me = null; coffees = []; ratings = []; profiles = {};
+    showLogin();
+  };
+  if (pending) {
+    dialog("Wirklich abmelden?", `${pending} Änderungen sind noch nicht übertragen und gehen beim Abmelden verloren.`, [
+      { label: "Trotzdem abmelden", style: "destructive", action: doIt }, { label: "Abbrechen" },
+    ]);
+  } else doIt();
+}
+
+// ================= Alte Einträge übernehmen =================
+function entryToCoffeeAndRating(e, photoPaths) {
+  const coffee = {
+    id: e.id, created_at: e.date || nowISO(), updated_at: nowISO(), created_by: me.id,
+    name: (e.coffeeName || "").trim() || "Ohne Namen", roaster: e.roaster || "",
+    method: METHOD_TITLE[e.method] ? e.method : (e.method === "espresso" ? "portafilter" : "other"),
+    coffee_grams: e.coffeeGrams ?? null, water_grams: e.waterGrams ?? e.waterMl ?? null,
+    grind_size: e.grindSize || "", brew_seconds: e.brewSeconds ?? null, water_temp_c: e.waterTempC ?? null,
+    barcode: /^\d{6,14}$/.test(e.barcode || "") ? e.barcode : "", description: "", photo_paths: photoPaths,
+  };
+  const rating = {
+    id: uuid(), coffee_id: e.id, user_id: me.id, drink: "",
+    stars: Math.min(5, Math.max(1, Math.round(e.rating || 3))),
+    flavor_tags: (e.flavorTags || []).filter((t) => TAG_TITLE[t]), notes: e.notes || "",
+    created_at: e.date || nowISO(), updated_at: nowISO(),
+  };
+  return { coffee, rating };
+}
+
+async function maybeMigrate() {
+  if (!me) return;
+  const old = await dbAll("entries");
+  if (!old.length || (await metaGet("migrated"))) return;
+  dialog("Bisherige Einträge übernehmen?",
+    `Auf diesem iPhone sind noch ${old.length} Einträge aus der alten Version. Sollen sie als Kaffees mit deiner Bewertung in das gemeinsame Tagebuch übernommen werden?`,
+    [
+      { label: "Übernehmen", style: "primary", action: () => migrate(old) },
+      { label: "Nicht übernehmen", action: () => dialog("Sicher?", "Die alten Einträge bleiben dann nur in einer Sicherung erhalten. Du kannst sie später noch über „Sicherung wiederherstellen“ übernehmen, wenn du jetzt eine Sicherung davon behältst.", [
+        { label: "Nicht übernehmen", style: "destructive", action: () => metaSet("migrated", "skipped") },
+        { label: "Doch übernehmen", action: () => migrate(old) },
+      ]) },
+      { label: "Später fragen" },
+    ]);
+}
+
+async function migrate(old) {
+  dialog("Wird übernommen …", "", []);
+  const existing = new Set(coffees.map((c) => c.id));
+  let n = 0;
+  for (const e of old) {
+    if (existing.has(e.id)) continue;
+    const paths = [];
+    for (const pid of e.photoIds || []) {
+      const rec = await dbGet("photos", pid);
+      if (!rec) continue;
+      const path = `${e.id}/${pid}.jpg`;
+      await dbPut("pics", { path, full: rec.full, thumb: rec.thumb });
+      await queue({ op: "upload", path });
+      paths.push(path);
+    }
+    const { coffee, rating } = entryToCoffeeAndRating(e, paths);
+    await dbPut("coffees", coffee); await queue({ op: "upsert", table: "coffees", row: coffee });
+    await dbPut("ratings", rating); await queue({ op: "upsert", table: "ratings", row: rating });
+    n++;
+  }
+  await metaSet("migrated", "done");
+  await refreshState(); renderAll();
+  dialog("Übernommen", `${n} Einträge sind jetzt im gemeinsamen Tagebuch.`, [{ label: "OK", style: "primary" }]);
+  sync();
+}
 
 // ================= Liste =================
-async function renderList() {
+function renderAll() {
+  if ($("listView").hidden && $("loginView").hidden === false) return;
+  renderList();
+  renderStatus();
+  if (!$("detailView").hidden && currentId) renderDetail();
+}
+
+function matches(c, q) {
+  const texts = [c.name, c.roaster, c.description, METHOD_TITLE[c.method] || ""];
+  for (const r of ratingsFor(c.id)) texts.push(r.notes, DRINK_TITLE[r.drink] || "", ...(r.flavor_tags || []).map((t) => TAG_TITLE[t] || ""), nameOf(r.user_id));
+  return texts.some((t) => (t || "").toLowerCase().includes(q));
+}
+
+function renderList() {
   const q = $("search").value.trim().toLowerCase();
-  const filtered = !q ? entries : entries.filter((e) =>
-    [e.coffeeName, e.roaster, e.notes, METHOD_TITLE[e.method] || ""].some((t) => (t || "").toLowerCase().includes(q)) ||
-    (e.flavorTags || []).some((t) => (TAG_TITLE[t] || "").includes(q)));
+  const filtered = q ? coffees.filter((c) => matches(c, q)) : coffees;
+  $("empty").hidden = coffees.length > 0;
+  $("searchWrap").hidden = coffees.length === 0;
+  $("noResults").hidden = !(coffees.length > 0 && filtered.length === 0);
+  $("footNote").textContent = coffees.length ? `${coffees.length} Kaffee${coffees.length === 1 ? "" : "s"}` : "";
 
-  $("empty").hidden = entries.length > 0;
-  $("search").hidden = entries.length === 0;
-  $("exportBtn").disabled = entries.length === 0;
-  $("noResults").hidden = !(entries.length > 0 && filtered.length === 0);
-
-  const list = $("list");
-  list.innerHTML = filtered.map((e) => {
-    const d = new Date(e.date);
-    const sub = [METHOD_TITLE[e.method] || "Sonstiges", e.roaster].filter(Boolean).join(" · ");
-    return `<button class="row" data-id="${esc(e.id)}">
-      <div class="thumb" data-thumb="${esc((e.photoIds || [])[0] || "")}"><div style="width:30px">${CUP_SVG}</div></div>
+  const others = Object.keys(profiles).filter((id) => me && id !== me.id);
+  $("list").innerHTML = filtered.map((c) => {
+    const sub = [c.roaster, METHOD_TITLE[c.method] || "Sonstiges"].filter(Boolean).join(" · ");
+    const rs = ratingsFor(c.id).sort((a) => (a.user_id === me.id ? -1 : 1));
+    const parts = rs.map((r) => `<span><b>${esc(nameOf(r.user_id))}</b>${starsHTML(r.stars, 12)}</span>`);
+    if (!myRating(c.id)) parts.push(`<span class="todo">Noch nicht von dir bewertet</span>`);
+    else for (const o of others) if (!rs.some((r) => r.user_id === o)) parts.push(`<span>${esc(nameOf(o))}: offen</span>`);
+    return `<button class="row" data-id="${esc(c.id)}">
+      <div class="thumb" data-thumb="${esc((c.photo_paths || [])[0] || "")}"><div style="width:30px">${BEAN_SVG}</div></div>
       <div class="row-main">
-        <div class="row-name serif">${esc(e.coffeeName)}</div>
+        <div class="row-name serif">${esc(c.name)}</div>
         <div class="row-sub">${esc(sub)}</div>
-        <div class="row-meta"><span class="stars" aria-label="${e.rating} von 5 Sternen">${starsHTML(e.rating)}</span><span class="row-date">${fmtDateShort(d)}</span></div>
+        <div class="row-rates">${parts.join("")}</div>
       </div>
+      ${CHEVRON}
     </button>`;
   }).join("");
 
-  for (const el of list.querySelectorAll("[data-thumb]")) {
-    const id = el.dataset.thumb;
-    if (!id) continue;
-    photoURL(id, "thumb").then((url) => { if (url) el.innerHTML = `<img src="${url}" alt="">`; });
+  for (const el of $("list").querySelectorAll("[data-thumb]")) {
+    const p = el.dataset.thumb;
+    if (p) picURL(p, "thumb").then((url) => { if (url) el.innerHTML = `<img src="${url}" alt="">`; });
   }
 }
-$("list").addEventListener("click", (e) => {
-  const row = e.target.closest(".row");
-  if (row) openDetail(row.dataset.id);
-});
+$("list").addEventListener("click", (e) => { const row = e.target.closest(".row"); if (row) openDetail(row.dataset.id); });
 $("search").addEventListener("input", renderList);
 $("newBtn").onclick = () => openEdit(null);
 $("firstBtn").onclick = () => openEdit(null);
-$("emptyCup").innerHTML = CUP_SVG;
-window.addEventListener("scroll", () => { $("smallTitle").style.opacity = window.scrollY > 40 ? 1 : 0; }, { passive: true });
-$("smallTitle").textContent = "Kaffee-Tagebuch";
+window.addEventListener("scroll", () => {
+  $("smallTitle").style.opacity = window.scrollY > 40 ? 1 : 0;
+  document.querySelector("#listView .bar").classList.toggle("scrolled", window.scrollY > 4);
+}, { passive: true });
 
 // ================= Detail =================
-async function openDetail(id) {
+function openDetail(id) {
   currentId = id;
-  const e = entries.find((x) => x.id === id);
-  if (!e) return;
-  const d = new Date(e.date);
-  const r = ratio(e);
-  const rows = [];
-  if (e.coffeeGrams != null) rows.push(["Kaffee", fmtNum(e.coffeeGrams) + " g"]);
-  if (e.waterGrams != null) rows.push(["Wasser", fmtNum(e.waterGrams) + " g"]);
-  if (r != null) rows.push(["Verhältnis", "1 : " + fmtNum(r)]);
-  if (e.grindSize) rows.push(["Mahlgrad", e.grindSize]);
-  if (e.brewSeconds != null) rows.push(["Brühzeit", fmtTime(e.brewSeconds) + " min"]);
-  if (e.waterTempC != null) rows.push(["Temperatur", fmtNum(e.waterTempC) + " °C"]);
-
-  const photos = e.photoIds || [];
-  $("detailContent").innerHTML = `
-    ${photos.length ? `<div class="carousel" id="carousel"></div>` : ""}
-    <h1 class="detail-name serif">${esc(e.coffeeName)}</h1>
-    ${e.roaster ? `<div class="detail-roaster">${esc(e.roaster)}</div>` : ""}
-    <div class="detail-meta"><span class="stars" aria-label="${e.rating} von 5 Sternen">${starsHTML(e.rating)}</span><span class="date">${esc(fmtDateLong(d))}</span></div>
-    <div class="card">
-      <div class="card-title">Zubereitung</div>
-      <div class="method-line"><span style="width:22px;color:var(--caramel)">${CUP_SVG}</span>${esc(METHOD_TITLE[e.method] || "Sonstiges")}</div>
-      ${rows.length ? `<div class="divider"></div>` + rows.map(([k, v]) => `<div class="info"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("") : ""}
-    </div>
-    ${(e.flavorTags || []).length ? `<div class="card"><div class="card-title">Geschmack</div><div class="chips" style="padding:0">${e.flavorTags.map((t) => `<span class="chip on">${esc(TAG_TITLE[t] || t)}</span>`).join("")}</div></div>` : ""}
-    ${e.notes && e.notes.trim() ? `<div class="card"><div class="card-title">Notiz</div><div class="notes">${esc(e.notes)}</div></div>` : ""}
-    <button class="danger-btn" id="deleteBtn">Eintrag löschen</button>`;
-
-  if (photos.length) {
-    const box = $("carousel");
-    for (const pid of photos) {
-      const url = await photoURL(pid, "full");
-      if (url) { const img = document.createElement("img"); img.src = url; img.alt = "Foto"; box.appendChild(img); }
-    }
-  }
-  $("deleteBtn").onclick = () => dialog("Eintrag löschen?", "Der Eintrag und seine Fotos werden dauerhaft entfernt.", [
-    { label: "Löschen", style: "destructive", action: () => deleteEntry(e) },
-    { label: "Abbrechen" },
-  ]);
   $("detailView").hidden = false;
   $("detailView").scrollTop = 0;
+  renderDetail();
+}
+
+async function renderDetail() {
+  const c = coffees.find((x) => x.id === currentId);
+  if (!c) { $("detailView").hidden = true; currentId = null; return; }
+  const r = ratioOf(c);
+  const rows = [];
+  if (c.coffee_grams != null) rows.push(["Kaffee", fmtNum(c.coffee_grams) + " g"]);
+  if (c.water_grams != null) rows.push(["Wasser", fmtNum(c.water_grams) + " g"]);
+  if (r != null) rows.push(["Verhältnis", "1 : " + fmtNum(r)]);
+  if (c.grind_size) rows.push(["Mahlgrad", c.grind_size]);
+  if (c.brew_seconds != null) rows.push(["Brühzeit", c.brew_seconds + " s"]);
+  if (c.water_temp_c != null) rows.push(["Temperatur", fmtNum(c.water_temp_c) + " °C"]);
+  if (c.barcode) rows.push(["Barcode", c.barcode]);
+
+  const mine = myRating(c.id);
+  const theirs = ratingsFor(c.id).filter((x) => x.user_id !== me.id);
+  const missing = Object.keys(profiles).filter((id) => id !== me.id && !theirs.some((x) => x.user_id === id));
+  const card = (x, isMine) => `
+    <div class="cell">
+      <div class="rate-head">
+        <div class="rate-who">${esc(isMine ? "Du" : nameOf(x.user_id))}${x.drink ? `<span class="rate-drink">${esc(DRINK_TITLE[x.drink] || x.drink)}</span>` : ""}</div>
+        ${isMine ? `<button class="text-btn" id="editMine" style="padding:4px 0">Ändern</button>` : ""}
+      </div>
+      <div class="rate-stars" role="img" aria-label="${x.stars} von 5 Sternen">${starIcons(x.stars, 20)}</div>
+      ${(x.flavor_tags || []).length ? `<div class="chips" style="padding:6px 0 2px">${x.flavor_tags.map((t) => `<span class="chip">${esc(TAG_TITLE[t] || t)}</span>`).join("")}</div>` : ""}
+      ${x.notes && x.notes.trim() ? `<div class="notes" style="margin-top:6px">${esc(x.notes)}</div>` : ""}
+      <div class="rate-date">${esc(fmtDateLong(new Date(x.updated_at || x.created_at)))}</div>
+    </div>`;
+
+  const photos = c.photo_paths || [];
+  $("detailContent").innerHTML = `
+    ${photos.length ? `<div class="carousel" id="carousel"></div>` : ""}
+    <div class="detail-head">
+      <h1 class="detail-name">${esc(c.name)}</h1>
+      ${c.roaster ? `<div class="detail-roaster">${esc(c.roaster)}</div>` : ""}
+      <div class="detail-meta">Angelegt von ${esc(c.created_by === me.id ? "dir" : nameOf(c.created_by))} am ${esc(fmtDateLong(new Date(c.created_at)))}</div>
+    </div>
+
+    <div class="section-title">Bewertungen</div>
+    <div class="group">
+      ${mine ? card(mine, true) : `<button class="action-cell" id="rateNow"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="${STAR_PATH}"/></svg>Jetzt bewerten</button>`}
+      ${theirs.map((x) => card(x, false)).join("")}
+      ${missing.map((id) => `<div class="cell rate-missing">${esc(nameOf(id))} hat noch nicht bewertet.</div>`).join("")}
+    </div>
+
+    <div class="section-title">Zubereitung</div>
+    <div class="group">
+      <div class="kv"><span>Methode</span><span>${esc(METHOD_TITLE[c.method] || "Sonstiges")}</span></div>
+      ${rows.map(([k, v]) => `<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("")}
+    </div>
+    ${c.description && c.description.trim() ? `<div class="section-title">Beschreibung</div><div class="group"><div class="cell notes">${esc(c.description)}</div></div>` : ""}
+    <button class="danger-cell" id="deleteBtn">Kaffee löschen</button>`;
+
+  if ($("editMine")) $("editMine").onclick = () => openRating(c.id);
+  if ($("rateNow")) $("rateNow").onclick = () => openRating(c.id);
+  $("deleteBtn").onclick = () => dialog("Kaffee löschen?",
+    "Der Kaffee wird für euch beide gelöscht – mit allen Bewertungen und Fotos.", [
+      { label: "Löschen", style: "destructive", action: () => deleteCoffee(c) }, { label: "Abbrechen" },
+    ]);
+  if (photos.length) {
+    const box = $("carousel");
+    for (const p of photos) {
+      const url = await picURL(p, "full");
+      if (url && box.isConnected) { const img = document.createElement("img"); img.src = url; img.alt = "Foto"; box.appendChild(img); }
+    }
+  }
 }
 $("detailBack").onclick = () => { $("detailView").hidden = true; currentId = null; };
-$("detailEdit").onclick = () => { const e = entries.find((x) => x.id === currentId); if (e) openEdit(e); };
+$("detailEdit").onclick = () => { const c = coffees.find((x) => x.id === currentId); if (c) openEdit(c); };
 
-async function deleteEntry(e) {
-  for (const pid of e.photoIds || []) await deletePhoto(pid);
-  await dbDelete("entries", e.id);
-  await loadEntries();
-  $("detailView").hidden = true;
-  currentId = null;
-  renderList();
+async function deleteCoffee(c) {
+  for (const p of c.photo_paths || []) { await queue({ op: "remove", path: p }); await dropLocalPic(p); }
+  for (const r of ratingsFor(c.id)) await dbDelete("ratings", r.id);
+  await dbDelete("coffees", c.id);
+  await queue({ op: "delete", table: "coffees", id: c.id });
+  $("detailView").hidden = true; currentId = null;
+  await refreshState(); renderAll(); sync();
 }
 
-// ================= Formular =================
+// ================= Kaffee anlegen / bearbeiten =================
 $("fMethod").innerHTML = METHODS.map(([k, t]) => `<option value="${k}">${esc(t)}</option>`).join("");
+let draft = null, original = null, addedPhotos = [];
 
-function openEdit(entry) {
-  original = entry;
-  draft = entry ? JSON.parse(JSON.stringify(entry)) : {
-    id: uuid(), date: new Date().toISOString(), coffeeName: "", roaster: "", method: "portafilter",
-    coffeeGrams: null, waterGrams: null, grindSize: "", brewSeconds: null, waterTempC: null,
-    rating: 3, flavorTags: [], notes: "", photoIds: [],
+function openEdit(coffee) {
+  original = coffee;
+  draft = coffee ? JSON.parse(JSON.stringify(coffee)) : {
+    id: uuid(), created_at: null, created_by: me.id, name: "", roaster: "", method: "portafilter",
+    coffee_grams: null, water_grams: null, grind_size: "", brew_seconds: null, water_temp_c: null,
+    barcode: "", description: "", photo_paths: [],
   };
   addedPhotos = [];
-  $("editTitle").textContent = entry ? "Bearbeiten" : "Neuer Kaffee";
-  $("fName").value = draft.coffeeName;
+  scanInfo = null;
+  $("editTitle").textContent = coffee ? "Kaffee bearbeiten" : "Neuer Kaffee";
+  $("fName").value = draft.name;
   $("fRoaster").value = draft.roaster;
-  $("fDate").value = toLocalInput(new Date(draft.date));
   $("fMethod").value = METHOD_TITLE[draft.method] ? draft.method : "other";
-  $("fCoffee").value = fmtNum(draft.coffeeGrams);
-  $("fWater").value = fmtNum(draft.waterGrams);
-  $("fGrind").value = draft.grindSize;
-  $("fTime").value = fmtTime(draft.brewSeconds);
-  $("fTemp").value = fmtNum(draft.waterTempC);
-  $("fNotes").value = draft.notes;
-  renderStars(); renderTags(); renderPhotos(); validate();
+  $("fCoffee").value = fmtNum(draft.coffee_grams);
+  $("fWater").value = fmtNum(draft.water_grams);
+  $("fGrind").value = draft.grind_size;
+  $("fTime").value = draft.brew_seconds ?? "";
+  $("fTemp").value = fmtNum(draft.water_temp_c);
+  $("fDesc").value = draft.description;
+  renderPhotos(); renderScanInfo(); validate();
   $("editView").hidden = false;
   $("editView").scrollTop = 0;
 }
 
-function renderStars() {
-  $("fStars").innerHTML = [1, 2, 3, 4, 5].map((i) =>
-    `<button type="button" data-v="${i}" class="${i <= draft.rating ? "" : "off"}" aria-label="${i} von 5 Sternen">★</button>`).join("");
-}
-$("fStars").addEventListener("click", (e) => {
-  const b = e.target.closest("button"); if (!b) return;
-  draft.rating = +b.dataset.v; renderStars();
-});
-
-function renderTags() {
-  $("fTags").innerHTML = TAGS.map(([k, t]) =>
-    `<button type="button" class="chip ${draft.flavorTags.includes(k) ? "on" : ""}" data-k="${k}" aria-pressed="${draft.flavorTags.includes(k)}">${esc(t)}</button>`).join("");
-}
-$("fTags").addEventListener("click", (e) => {
-  const b = e.target.closest("button"); if (!b) return;
-  const k = b.dataset.k;
-  draft.flavorTags = draft.flavorTags.includes(k) ? draft.flavorTags.filter((x) => x !== k) : [...draft.flavorTags, k];
-  renderTags();
-});
-
 async function renderPhotos() {
   const strip = $("fPhotos");
-  strip.hidden = draft.photoIds.length === 0;
-  strip.innerHTML = draft.photoIds.map((id) =>
-    `<div class="ph" data-id="${esc(id)}"><button type="button" class="rm" data-rm="${esc(id)}" aria-label="Foto entfernen">✕</button></div>`).join("");
+  strip.hidden = draft.photo_paths.length === 0;
+  strip.innerHTML = draft.photo_paths.map((p) =>
+    `<div class="ph" data-p="${esc(p)}"><button type="button" class="rm" data-rm="${esc(p)}" aria-label="Foto entfernen">✕</button></div>`).join("");
   for (const el of strip.querySelectorAll(".ph")) {
-    const url = await photoURL(el.dataset.id, "thumb");
+    const url = await picURL(el.dataset.p, "thumb");
     if (url) { const img = document.createElement("img"); img.src = url; img.alt = ""; el.prepend(img); }
   }
 }
 $("fPhotos").addEventListener("click", (e) => {
   const b = e.target.closest("[data-rm]"); if (!b) return;
-  draft.photoIds = draft.photoIds.filter((x) => x !== b.dataset.rm);
+  draft.photo_paths = draft.photo_paths.filter((x) => x !== b.dataset.rm);
   renderPhotos();
 });
 $("addPhotoBtn").onclick = () => $("fileInput").click();
@@ -590,98 +1001,322 @@ $("fileInput").addEventListener("change", async (e) => {
   if (!files.length) return;
   $("photoBusy").hidden = false; $("editSave").disabled = true;
   for (const f of files) {
-    try {
-      const id = await savePhoto(f);
-      draft.photoIds.push(id); addedPhotos.push(id);
-    } catch (err) {
-      console.error(err);
-    }
+    try { const p = await addPhotoFile(f, draft.id); draft.photo_paths.push(p); addedPhotos.push(p); }
+    catch (err) { console.error(err); }
   }
   $("photoBusy").hidden = true;
-  await renderPhotos();
-  validate();
+  await renderPhotos(); validate();
 });
 
-function readForm() {
+function readRecipe() {
   return {
-    coffeeGrams: parseNum($("fCoffee").value),
-    waterGrams: parseNum($("fWater").value),
-    waterTempC: parseNum($("fTemp").value),
-    brewSeconds: parseTime($("fTime").value),
+    coffee_grams: parseNum($("fCoffee").value), water_grams: parseNum($("fWater").value),
+    water_temp_c: parseNum($("fTemp").value), brew_seconds: parseSeconds($("fTime").value),
   };
 }
 function validate() {
-  const v = readForm();
-  $("fCoffee").classList.toggle("invalid", isBad(v.coffeeGrams));
-  $("fWater").classList.toggle("invalid", isBad(v.waterGrams));
-  $("fTemp").classList.toggle("invalid", isBad(v.waterTempC));
-  $("fTime").classList.toggle("invalid", isBad(v.brewSeconds));
-  const recipeOk = !Object.values(v).some(isBad);
-  $("recipeHint").hidden = recipeOk;
-  const ok = recipeOk && $("fName").value.trim() !== "" && $("photoBusy").hidden;
-  $("editSave").disabled = !ok;
-  return ok;
+  const v = readRecipe();
+  $("fCoffee").classList.toggle("invalid", isBad(v.coffee_grams));
+  $("fWater").classList.toggle("invalid", isBad(v.water_grams));
+  $("fTemp").classList.toggle("invalid", isBad(v.water_temp_c));
+  $("fTime").classList.toggle("invalid", isBad(v.brew_seconds));
+  const ok = !Object.values(v).some(isBad);
+  $("recipeHint").hidden = ok;
+  const all = ok && $("fName").value.trim() !== "" && $("photoBusy").hidden;
+  $("editSave").disabled = !all;
+  return all;
 }
 $("editForm").addEventListener("input", validate);
 
 $("editSave").onclick = async () => {
   if (!validate()) return;
-  const v = readForm();
-  const dateVal = $("fDate").value ? new Date($("fDate").value) : new Date(draft.date);
-  const entry = {
-    ...draft,
-    coffeeName: $("fName").value.trim(),
-    roaster: $("fRoaster").value.trim(),
-    date: (isNaN(dateVal) ? new Date() : dateVal).toISOString(),
-    method: $("fMethod").value,
-    grindSize: $("fGrind").value.trim(),
-    notes: $("fNotes").value,
-    ...v,
+  const isNew = !original;
+  const row = {
+    ...draft, ...readRecipe(),
+    name: $("fName").value.trim(), roaster: $("fRoaster").value.trim(), method: $("fMethod").value,
+    grind_size: $("fGrind").value.trim(), description: $("fDesc").value.trim(),
+    created_at: draft.created_at || nowISO(), updated_at: nowISO(),
   };
-  const kept = new Set(entry.photoIds);
-  for (const id of [...(original ? original.photoIds || [] : []), ...addedPhotos]) {
-    if (!kept.has(id)) await deletePhoto(id);
+  const kept = new Set(row.photo_paths);
+  for (const p of addedPhotos) {
+    if (kept.has(p)) await queue({ op: "upload", path: p });
+    else await dropLocalPic(p);
   }
-  await dbPut("entries", entry);
-  await loadEntries();
+  for (const p of original ? original.photo_paths || [] : []) {
+    if (!kept.has(p)) { await queue({ op: "remove", path: p }); await dropLocalPic(p); }
+  }
+  await dbPut("coffees", row);
+  await queue({ op: "upsert", table: "coffees", row });
+  addedPhotos = [];
   $("editView").hidden = true;
-  renderList();
-  if (currentId === entry.id) openDetail(entry.id);
+  await refreshState(); renderAll();
+  sync();
+  openDetail(row.id);
+  if (isNew) openRating(row.id);
 };
 
 $("editCancel").onclick = async () => {
-  for (const id of addedPhotos) await deletePhoto(id);
+  for (const p of addedPhotos) await dropLocalPic(p);
   addedPhotos = [];
   $("editView").hidden = true;
 };
 
-// ================= Export (Excel-kompatible CSV + Fotos) =================
-const CSV_HEADER = ["Datum", "Uhrzeit", "Sorte", "Röster", "Zubereitung", "Kaffee (g)", "Wasser (g)",
-  "Verhältnis (g Wasser je g Kaffee)", "Mahlgrad", "Brühzeit (Sek.)", "Temperatur (°C)",
-  "Bewertung (1-5)", "Geschmack", "Notiz", "Fotos"];
+// ================= Meine Bewertung =================
+$("rDrink").innerHTML = `<option value="">Bitte wählen</option>` + DRINKS.map(([k, t]) => `<option value="${k}">${esc(t)}</option>`).join("");
+let rDraft = null;
+
+function openRating(coffeeId) {
+  const c = coffees.find((x) => x.id === coffeeId);
+  if (!c) return;
+  const ex = myRating(coffeeId);
+  rDraft = ex ? JSON.parse(JSON.stringify(ex)) : {
+    id: uuid(), coffee_id: coffeeId, user_id: me.id, drink: "", stars: 0, flavor_tags: [], notes: "", created_at: null,
+  };
+  $("rateCoffee").textContent = c.name;
+  $("rDrink").value = DRINK_TITLE[rDraft.drink] ? rDraft.drink : "";
+  $("rNotes").value = rDraft.notes || "";
+  $("rateDelete").hidden = !ex;
+  $("rateCancel").textContent = ex ? "Abbrechen" : "Später";
+  renderRStars(); renderRTags(); validateRating();
+  $("rateView").hidden = false;
+  $("rateView").scrollTop = 0;
+}
+function renderRStars() {
+  $("rStars").innerHTML = [1, 2, 3, 4, 5].map((i) =>
+    `<button type="button" data-v="${i}" class="${i <= rDraft.stars ? "" : "off"}" aria-label="${i} von 5 Sternen"><svg width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="${STAR_PATH}"/></svg></button>`).join("");
+}
+$("rStars").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  rDraft.stars = +b.dataset.v; renderRStars(); validateRating();
+});
+function renderRTags() {
+  $("rTags").innerHTML = TAGS.map(([k, t]) =>
+    `<button type="button" class="chip ${rDraft.flavor_tags.includes(k) ? "on" : ""}" data-k="${k}" aria-pressed="${rDraft.flavor_tags.includes(k)}">${esc(t)}</button>`).join("");
+}
+$("rTags").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  const k = b.dataset.k;
+  rDraft.flavor_tags = rDraft.flavor_tags.includes(k) ? rDraft.flavor_tags.filter((x) => x !== k) : [...rDraft.flavor_tags, k];
+  renderRTags();
+});
+function validateRating() {
+  const ok = rDraft.stars >= 1 && $("rDrink").value !== "";
+  $("rateSave").disabled = !ok;
+  $("rateHint").hidden = ok;
+  return ok;
+}
+$("rDrink").addEventListener("change", validateRating);
+
+$("rateSave").onclick = async () => {
+  if (!validateRating()) return;
+  const row = { ...rDraft, drink: $("rDrink").value, notes: $("rNotes").value.trim(), created_at: rDraft.created_at || nowISO(), updated_at: nowISO() };
+  await dbPut("ratings", row);
+  await queue({ op: "upsert", table: "ratings", row });
+  $("rateView").hidden = true;
+  await refreshState(); renderAll(); sync();
+};
+$("rateCancel").onclick = () => { $("rateView").hidden = true; };
+$("rateDelete").onclick = () => dialog("Bewertung löschen?", "Deine Bewertung für diesen Kaffee wird entfernt.", [
+  { label: "Löschen", style: "destructive", action: async () => {
+    await dbDelete("ratings", rDraft.id);
+    await queue({ op: "delete", table: "ratings", id: rDraft.id });
+    $("rateView").hidden = true;
+    await refreshState(); renderAll(); sync();
+  } },
+  { label: "Abbrechen" },
+]);
+
+// ================= Barcode scannen & Infos holen =================
+let zxingLoading = null, scanReader = null, scanInfo = null;
+
+function loadZXing() {
+  if (window.ZXing) return Promise.resolve();
+  if (!zxingLoading) {
+    zxingLoading = new Promise((resolve, reject) => {
+      const sc = document.createElement("script");
+      sc.src = "zxing.min.js";
+      sc.onload = () => resolve();
+      sc.onerror = () => { zxingLoading = null; reject(new Error("Scanner konnte nicht geladen werden.")); };
+      document.head.appendChild(sc);
+    });
+  }
+  return zxingLoading;
+}
+function makeReader() {
+  const Z = window.ZXing;
+  const hints = new Map();
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E]);
+  hints.set(Z.DecodeHintType.TRY_HARDER, true);
+  return new Z.BrowserMultiFormatReader(hints, 250);
+}
+function stopScanner() {
+  if (scanReader) { try { scanReader.reset(); } catch (_) {} scanReader = null; }
+  const v = $("scanVideo");
+  if (v.srcObject) { v.srcObject.getTracks().forEach((t) => t.stop()); v.srcObject = null; }
+  $("scanView").hidden = true;
+}
+async function openScanner() {
+  $("scanHint").textContent = "Halte den Strichcode der Kaffeepackung in den Rahmen.";
+  $("scanView").hidden = false;
+  try {
+    await loadZXing();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("no-camera");
+    scanReader = makeReader();
+    let done = false;
+    await scanReader.decodeFromConstraints(
+      { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+      $("scanVideo"),
+      (result) => {
+        if (result && !done) {
+          done = true;
+          if (navigator.vibrate) navigator.vibrate(60);
+          stopScanner();
+          handleBarcode(result.getText());
+        }
+      });
+  } catch (err) {
+    console.error(err);
+    $("scanHint").textContent = err && err.name === "NotAllowedError"
+      ? "Kein Zugriff auf die Kamera. Erlaube ihn in den Einstellungen – oder nimm unten ein Foto vom Barcode auf."
+      : "Die Live-Kamera klappt hier nicht. Nimm unten ein Foto vom Barcode auf oder tippe die Nummer ein.";
+  }
+}
+$("scanBtn").onclick = openScanner;
+$("scanCancel").onclick = stopScanner;
+$("scanPhotoBtn").onclick = () => $("scanPhotoInput").click();
+$("scanPhotoInput").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0];
+  ev.target.value = "";
+  if (!file) return;
+  $("scanHint").textContent = "Barcode wird gesucht …";
+  try {
+    await loadZXing();
+    if (scanReader) { try { scanReader.reset(); } catch (_) {} }
+    const img = await loadImage(file);
+    const blob = await scaleToJpeg(img, 1600, 0.92);
+    const url = URL.createObjectURL(blob);
+    try {
+      const result = await makeReader().decodeFromImageUrl(url);
+      stopScanner();
+      handleBarcode(result.getText());
+    } finally { URL.revokeObjectURL(url); }
+  } catch (err) {
+    console.error(err);
+    $("scanHint").textContent = "Auf dem Foto wurde kein Barcode erkannt. Bitte näher ran, scharf und gerade fotografieren – oder die Nummer eintippen.";
+  }
+});
+$("scanTypeBtn").onclick = () => {
+  const code = (prompt("Barcode-Nummer (die Ziffern unter dem Strichcode):") || "").replace(/\D/g, "");
+  if (!code) return;
+  if (code.length < 6 || code.length > 14) { $("scanHint").textContent = "Das sieht nicht nach einer Barcode-Nummer aus (8 oder 13 Ziffern)."; return; }
+  stopScanner();
+  handleBarcode(code);
+};
+
+function appendDesc(text) {
+  const cur = $("fDesc").value.trim();
+  if (cur.includes(text)) return;
+  $("fDesc").value = cur ? cur + "\n" + text : text;
+}
+
+async function handleBarcode(code) {
+  const existing = coffees.find((c) => c.barcode === code && c.id !== draft.id);
+  if (existing) {
+    dialog("Diesen Kaffee gibt es schon",
+      `„${existing.name}“ ist bereits angelegt. Ihr könnt ihn dort bewerten – so bleiben alle Bewertungen zusammen.`, [
+        { label: "Zum Kaffee", style: "primary", action: async () => {
+          for (const p of addedPhotos) await dropLocalPic(p);
+          addedPhotos = [];
+          $("editView").hidden = true;
+          openDetail(existing.id);
+          if (!myRating(existing.id)) openRating(existing.id);
+        } },
+        { label: "Trotzdem neu anlegen", action: () => lookupBarcode(code) },
+      ]);
+    return;
+  }
+  lookupBarcode(code);
+}
+
+async function lookupBarcode(code) {
+  draft.barcode = code;
+  scanInfo = { kind: "loading", code, title: "Suche Infos zu " + code + " …" };
+  renderScanInfo();
+  try {
+    const fields = "product_name,product_name_de,generic_name,generic_name_de,brands,quantity,origins,labels,categories_tags,image_front_small_url";
+    const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${fields}&lc=de`);
+    const data = await res.json();
+    const p = data && data.status === 1 ? data.product : null;
+    const name = p && (p.product_name_de || p.product_name || "").trim();
+    if (!p || !name) {
+      scanInfo = { kind: "none", code, title: "Nicht gefunden", text: "Diesen Kaffee kennt die Datenbank noch nicht. Bitte Name und Röster selbst eintragen – beim nächsten Scan erkennt die App ihn dann wieder." };
+      renderScanInfo(); validate();
+      return;
+    }
+    const brand = (p.brands || "").split(",")[0].trim();
+    const cats = p.categories_tags || [];
+    const form = cats.includes("en:coffee-beans") ? "ganze Bohnen" : cats.includes("en:ground-coffees") ? "gemahlen" : cats.some((c) => c.includes("capsule")) ? "Kapseln" : "";
+    const generic = (p.generic_name_de || p.generic_name || "").trim();
+    const parts = [
+      generic,
+      form && !generic.toLowerCase().includes(form.split(" ").pop().toLowerCase()) ? form : "",
+      (p.quantity || "").trim(),
+      p.origins ? "Herkunft: " + p.origins.trim() : "",
+      p.labels ? p.labels.trim() : "",
+    ].filter(Boolean);
+    $("fName").value = name;
+    if (brand) $("fRoaster").value = brand;
+    const desc = parts.join(" · ");
+    if (desc) appendDesc(desc);
+    scanInfo = { kind: "off", code, title: name + (brand ? " – " + brand : ""), text: desc || "Name und Marke übernommen.", image: p.image_front_small_url || "" };
+  } catch (err) {
+    console.error(err);
+    scanInfo = { kind: "offline", code, title: "Keine Verbindung", text: "Die Infos konnten nicht abgerufen werden. Der Barcode ist gespeichert – bitte Name selbst eintragen." };
+  }
+  renderScanInfo(); validate();
+}
+
+function renderScanInfo() {
+  const box = $("scanInfo");
+  const code = draft && draft.barcode;
+  if (!code) { box.hidden = true; box.innerHTML = ""; return; }
+  const info = scanInfo && scanInfo.code === code ? scanInfo : { title: "Barcode " + code, text: "" };
+  const src = info.kind === "off" ? "Quelle: Open Food Facts · " : "";
+  box.innerHTML = `${info.image ? `<img src="${esc(info.image)}" alt="" referrerpolicy="no-referrer">` : ""}
+    <div><div><strong>${esc(info.title)}</strong></div>${info.text ? `<div>${esc(info.text)}</div>` : ""}<div class="muted">${esc(src)}EAN ${esc(code)}</div></div>`;
+  box.hidden = false;
+}
+
+// ================= Excel-Export =================
+const CSV_HEADER = ["Kaffee", "Röster", "Angelegt am", "Zubereitung", "Kaffee (g)", "Wasser (g)",
+  "Verhältnis (g Wasser je g Kaffee)", "Mahlgrad", "Brühzeit (Sek.)", "Temperatur (°C)", "Barcode (EAN)",
+  "Beschreibung", "Fotos", "Bewertet von", "Getränk", "Sterne (1-5)", "Geschmack", "Notiz", "Bewertet am"];
 const csvText = (s) => { s = String(s ?? ""); return /^[=+\-@]/.test(s) ? " " + s : s; };
 const csvCell = (s) => { s = String(s ?? ""); return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 
 async function buildExport() {
   const files = [];
   const rows = [CSV_HEADER];
-  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
-  for (const e of sorted) {
-    const d = new Date(e.date);
+  for (const c of [...coffees].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))) {
+    const d = new Date(c.created_at);
     const names = [];
-    for (const [i, pid] of (e.photoIds || []).entries()) {
-      const rec = await dbGet("photos", pid);
+    for (const [i, p] of (c.photo_paths || []).entries()) {
+      if (!(await picURL(p, "full"))) continue;
+      const rec = await dbGet("pics", p);
       if (!rec) continue;
-      const name = `${fileStamp(d)}_${e.id.slice(0, 4)}_${i + 1}.jpg`;
+      const name = `${fileStamp(d)}_${c.id.slice(0, 4)}_${i + 1}.jpg`;
       files.push(new File([rec.full], name, { type: "image/jpeg" }));
       names.push(name);
     }
-    rows.push([
-      fmtDateShort(d), fmtClock(d), csvText(e.coffeeName), csvText(e.roaster),
-      METHOD_TITLE[e.method] || "Sonstiges", fmtNum(e.coffeeGrams), fmtNum(e.waterGrams), fmtNum(ratio(e)),
-      csvText(e.grindSize), e.brewSeconds ?? "", fmtNum(e.waterTempC), e.rating,
-      (e.flavorTags || []).map((t) => TAG_TITLE[t] || t).join(", "), csvText(e.notes), names.join(", "),
-    ]);
+    const base = [csvText(c.name), csvText(c.roaster), fmtDateShort(d), METHOD_TITLE[c.method] || "Sonstiges",
+      fmtNum(c.coffee_grams), fmtNum(c.water_grams), fmtNum(ratioOf(c)), csvText(c.grind_size), c.brew_seconds ?? "",
+      fmtNum(c.water_temp_c), c.barcode ? "⁠" + c.barcode : "", csvText(c.description), names.join(", ")];
+    const rs = ratingsFor(c.id);
+    if (!rs.length) rows.push([...base, "", "", "", "", "", ""]);
+    for (const r of rs) {
+      rows.push([...base, nameOf(r.user_id), DRINK_TITLE[r.drink] || "", r.stars,
+        (r.flavor_tags || []).map((t) => TAG_TITLE[t] || t).join(", "), csvText(r.notes), fmtDateShort(new Date(r.updated_at || r.created_at))]);
+    }
   }
   const csv = rows.map((r) => r.map(csvCell).join(";")).join("\r\n") + "\r\n";
   const csvFile = new File(["﻿" + csv], `Kaffee-Tagebuch_${fileStamp(new Date())}.csv`, { type: "text/csv" });
@@ -696,41 +1331,311 @@ function download(file) {
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 
-$("exportBtn").onclick = async () => {
-  if (!entries.length) return;
+async function exportTable() {
   dialog("Export wird vorbereitet …", "", []);
   let pack;
   try { pack = await buildExport(); }
   catch (err) { dialog("Export fehlgeschlagen", String(err.message || err), [{ label: "OK" }]); return; }
-
   const all = [pack.csvFile, ...pack.photoFiles];
   const canShareAll = navigator.canShare && navigator.canShare({ files: all });
   const canShareCsv = navigator.canShare && navigator.canShare({ files: [pack.csvFile] });
-  const text = `${entries.length} Einträge` + (pack.photoFiles.length ? ` und ${pack.photoFiles.length} Fotos` : "") +
-    ". Tipp: „In Dateien sichern“ wählen und einen eigenen Ordner anlegen.";
-
   const share = async (files) => {
     try { await navigator.share({ files, title: "Kaffee-Tagebuch" }); }
-    catch (err) { if (err.name !== "AbortError") { download(pack.csvFile); } }
+    catch (err) { if (err.name !== "AbortError") download(pack.csvFile); }
   };
-
   const buttons = [];
   if (canShareAll) buttons.push({ label: pack.photoFiles.length ? "Tabelle + Fotos teilen" : "Tabelle teilen", style: "primary", action: () => share(all) });
   if (pack.photoFiles.length && canShareCsv) buttons.push({ label: "Nur Tabelle teilen", action: () => share([pack.csvFile]) });
   if (!canShareAll && !canShareCsv) buttons.push({ label: "Tabelle herunterladen", style: "primary", action: () => download(pack.csvFile) });
   buttons.push({ label: "Abbrechen" });
-  dialog("Export bereit", text, buttons);
+  dialog("Export bereit", `${coffees.length} Kaffees, ${ratings.length} Bewertungen` + (pack.photoFiles.length ? `, ${pack.photoFiles.length} Fotos` : "") +
+    ". Tipp: „In Dateien sichern“ wählen.", buttons);
+}
+
+// ================= Sicherung =================
+const BACKUP_APP = "kaffee-tagebuch";
+const LAST_BACKUP_KEY = "kaffee-letzte-sicherung";
+function lastBackupText() {
+  let iso = null;
+  try { iso = localStorage.getItem(LAST_BACKUP_KEY); } catch (_) {}
+  return iso ? "Letzte Sicherung: " + fmtDateShort(new Date(iso)) + "." : "Noch keine Sicherung erstellt.";
+}
+const markBackupDone = () => { try { localStorage.setItem(LAST_BACKUP_KEY, nowISO()); } catch (_) {} };
+const bufToBase64 = (buf) => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve(String(r.result).split(",")[1] || "");
+  r.onerror = () => reject(r.error);
+  r.readAsDataURL(new Blob([buf]));
+});
+function base64ToBuf(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+async function createBackup() {
+  dialog("Sicherung wird erstellt …", "Fotos werden ggf. noch geladen.", []);
+  try {
+    const pics = {};
+    for (const c of coffees) for (const p of c.photo_paths || []) {
+      await picURL(p, "full");
+      const rec = await dbGet("pics", p);
+      if (rec) pics[p] = await bufToBase64(rec.full);
+    }
+    const data = { app: BACKUP_APP, version: 2, created: nowISO(), coffees, ratings, profiles: Object.values(profiles), pics };
+    const file = new File([JSON.stringify(data)], `Kaffee-Tagebuch-Sicherung_${fileStamp(new Date())}.json`, { type: "application/json" });
+    const mb = (file.size / 1048576).toLocaleString("de-DE", { maximumFractionDigits: 1 });
+    const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+    dialog("Sicherung bereit", `${coffees.length} Kaffees mit ${ratings.length} Bewertungen und allen Fotos (${mb} MB). Am besten in „Dateien“ → iCloud Drive sichern.`, [
+      canShare
+        ? { label: "Sicherung teilen / sichern", style: "primary", action: async () => {
+            try { await navigator.share({ files: [file], title: "Kaffee-Tagebuch-Sicherung" }); markBackupDone(); }
+            catch (err) { if (err.name !== "AbortError") { download(file); markBackupDone(); } }
+          } }
+        : { label: "Sicherung herunterladen", style: "primary", action: () => { download(file); markBackupDone(); } },
+      { label: "Abbrechen" },
+    ]);
+  } catch (err) {
+    dialog("Sicherung fehlgeschlagen", String(err.message || err), [{ label: "OK" }]);
+  }
+}
+
+async function restoreBackup(data) {
+  dialog("Wird wiederhergestellt …", "", []);
+  try {
+    const existing = new Set(coffees.map((c) => c.id));
+    let addedC = 0, addedR = 0, skippedOther = 0;
+    const putPic = async (path, b64) => { await storePic(path, base64ToBuf(b64)); await queue({ op: "upload", path }); };
+
+    if (data.version === 1 || Array.isArray(data.entries)) {
+      for (const e of data.entries || []) {
+        if (!e || typeof e.id !== "string" || existing.has(e.id)) continue;
+        const paths = [];
+        for (const pid of e.photoIds || []) {
+          if (!data.photos || !data.photos[pid]) continue;
+          const path = `${e.id}/${pid}.jpg`;
+          await putPic(path, data.photos[pid]); paths.push(path);
+        }
+        const { coffee, rating } = entryToCoffeeAndRating(e, paths);
+        await dbPut("coffees", coffee); await queue({ op: "upsert", table: "coffees", row: coffee }); addedC++;
+        await dbPut("ratings", rating); await queue({ op: "upsert", table: "ratings", row: rating }); addedR++;
+      }
+    } else {
+      const havePics = data.pics || {};
+      for (const c of data.coffees || []) {
+        if (!c || typeof c.id !== "string" || existing.has(c.id)) continue;
+        const paths = [];
+        for (const p of c.photo_paths || []) if (havePics[p]) { await putPic(p, havePics[p]); paths.push(p); }
+        const row = { ...c, photo_paths: paths, method: METHOD_TITLE[c.method] ? c.method : "other" };
+        await dbPut("coffees", row); await queue({ op: "upsert", table: "coffees", row }); addedC++;
+        existing.add(c.id);
+      }
+      const haveRatings = new Set(ratings.map((r) => r.coffee_id + "|" + r.user_id));
+      for (const r of data.ratings || []) {
+        if (!r || !existing.has(r.coffee_id) || haveRatings.has(r.coffee_id + "|" + r.user_id)) continue;
+        if (r.user_id !== me.id) { skippedOther++; continue; } // fremde Bewertungen darf nur die Person selbst anlegen
+        await dbPut("ratings", r); await queue({ op: "upsert", table: "ratings", row: r }); addedR++;
+      }
+    }
+    await refreshState(); renderAll(); sync();
+    dialog("Fertig", `${addedC} Kaffees und ${addedR} Bewertungen hinzugefügt.` +
+      (skippedOther ? `\n${skippedOther} Bewertungen der anderen Person wurden übersprungen – die kann nur sie selbst wiederherstellen.` : ""), [{ label: "OK", style: "primary" }]);
+  } catch (err) {
+    await refreshState(); renderAll();
+    dialog("Wiederherstellen fehlgeschlagen", String(err.message || err), [{ label: "OK" }]);
+  }
+}
+
+$("restoreInput").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0];
+  ev.target.value = "";
+  if (!file) return;
+  const text = (await file.text()).replace(/^﻿/, "");
+  let data = null;
+  if (/^\s*\{/.test(text)) { try { data = JSON.parse(text); } catch (_) { data = null; } }
+
+  if (data) {
+    if (data.app !== BACKUP_APP || !(Array.isArray(data.entries) || Array.isArray(data.coffees))) {
+      dialog("Datei nicht erkannt", "Das ist keine Sicherung des Kaffee-Tagebuchs.", [{ label: "OK" }]);
+      return;
+    }
+    const n = (data.coffees || data.entries).length;
+    const when = data.created ? " vom " + fmtDateShort(new Date(data.created)) : "";
+    dialog("Sicherung importieren", `Die Sicherung${when} enthält ${n} ${data.coffees ? "Kaffees" : "Einträge"} (mit Fotos). Fehlendes wird hinzugefügt, Vorhandenes bleibt unverändert.`, [
+      { label: "Importieren", style: "primary", action: () => restoreBackup(data) },
+      { label: "Abbrechen" },
+    ]);
+    return;
+  }
+
+  let plan;
+  try { plan = planCsvImport(text); }
+  catch (err) { dialog("Tabelle nicht erkannt", String(err.message || err), [{ label: "OK" }]); return; }
+  const lines = [
+    `${plan.coffeesNew.length} neue Kaffees, ${plan.ratingsNew.length} deiner Bewertungen.`,
+    plan.coffeesKnown ? `${plan.coffeesKnown} Kaffees gibt es schon – sie bleiben unverändert.` : "",
+    plan.ratingsKnown ? `${plan.ratingsKnown} Bewertungen hast du schon.` : "",
+    plan.ratingsOther ? `${plan.ratingsOther} Bewertungen anderer Personen werden übersprungen – die kann nur die Person selbst importieren.` : "",
+    plan.bad ? `${plan.bad} Zeilen ohne Kaffeenamen werden übersprungen.` : "",
+    "Fotos stehen nicht in der Tabelle und werden nicht importiert.",
+  ].filter(Boolean).join("\n");
+  if (!plan.coffeesNew.length && !plan.ratingsNew.length) {
+    dialog("Nichts Neues", lines, [{ label: "OK" }]);
+    return;
+  }
+  dialog("Tabelle importieren", lines, [
+    { label: "Importieren", style: "primary", action: () => applyCsvImport(plan) },
+    { label: "Abbrechen" },
+  ]);
+});
+
+// ================= Import aus Excel-Tabelle (CSV) =================
+function parseCSV(text) {
+  const first = text.split(/\r?\n/, 1)[0];
+  const delim = (first.match(/;/g) || []).length >= (first.match(/,/g) || []).length ? ";" : (first.includes("\t") ? "\t" : ",");
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) {
+      if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === delim) { row.push(cell); cell = ""; }
+    else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else cell += ch;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter((r) => r.some((c) => c.trim() !== ""));
+}
+
+function parseDeDate(d, t) {
+  const m = String(d || "").trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+  if (!m) return null;
+  const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+  const tm = String(t || "").trim().match(/^(\d{1,2}):(\d{2})/);
+  const date = new Date(y, +m[2] - 1, +m[1], tm ? +tm[1] : 12, tm ? +tm[2] : 0);
+  return isNaN(date) ? null : date.toISOString();
+}
+const byTitle = (list, title) => {
+  const t = String(title || "").trim().toLowerCase();
+  const hit = list.find(([k, v]) => v.toLowerCase() === t || k.toLowerCase() === t);
+  return hit ? hit[0] : "";
+};
+const cleanText = (v) => String(v || "").replace(/^⁠/, "").replace(/^ (?=[=+\-@])/, "").trim();
+const coffeeKey = (name, roaster, barcode) => barcode ? "ean:" + barcode : "n:" + name.toLowerCase() + "|" + roaster.toLowerCase();
+
+function planCsvImport(text) {
+  const rows = parseCSV(text);
+  if (rows.length < 2) throw new Error("Die Tabelle ist leer.");
+  const header = rows[0].map((h) => cleanText(h).toLowerCase());
+  const col = (...names) => header.findIndex((h) => names.includes(h));
+  const C = {
+    name: col("kaffee", "sorte", "name"), roaster: col("röster"), date: col("angelegt am", "datum"), time: col("uhrzeit"),
+    method: col("zubereitung", "methode"), grams: col("kaffee (g)"), water: col("wasser (g)", "wasser (ml)"), grind: col("mahlgrad"),
+    secs: col("brühzeit (sek.)", "brühzeit (s)", "brühzeit"), temp: col("temperatur (°c)", "temperatur"), barcode: col("barcode (ean)", "barcode", "ean"),
+    desc: col("beschreibung"), who: col("bewertet von"), drink: col("getränk"), stars: col("sterne (1-5)", "bewertung (1-5)", "sterne", "bewertung"),
+    tags: col("geschmack"), notes: col("notiz"), rdate: col("bewertet am"),
+  };
+  if (C.name < 0) throw new Error("Es fehlt die Spalte „Kaffee“ (oder „Sorte“). Bitte eine Tabelle verwenden, die aus der App exportiert wurde.");
+  const get = (r, i) => (i >= 0 ? cleanText(r[i]) : "");
+  const num = (v) => { const n = parseNum(v); return isBad(n) ? null : n; };
+
+  const known = new Map(coffees.map((c) => [coffeeKey(c.name, c.roaster || "", c.barcode || ""), c.id]));
+  for (const c of coffees) known.set(coffeeKey(c.name, c.roaster || "", ""), c.id);
+  const myName = nameOf(me.id).toLowerCase();
+  const plan = { coffeesNew: [], ratingsNew: [], coffeesKnown: 0, ratingsKnown: 0, ratingsOther: 0, bad: 0 };
+  const planned = new Map(); const seenKnown = new Set();
+
+  for (const r of rows.slice(1)) {
+    const name = get(r, C.name);
+    if (!name) { plan.bad++; continue; }
+    const roaster = get(r, C.roaster);
+    const barcode = /^\d{6,14}$/.test(get(r, C.barcode)) ? get(r, C.barcode) : "";
+    const key = coffeeKey(name, roaster, barcode);
+    let cid = planned.get(key);
+    if (!cid) {
+      const k = known.get(key) || known.get(coffeeKey(name, roaster, ""));
+      if (k) { cid = k; if (!seenKnown.has(k)) { seenKnown.add(k); plan.coffeesKnown++; } }
+    }
+    if (!cid) {
+      const created = parseDeDate(get(r, C.date), get(r, C.time)) || nowISO();
+      const secs = parseSeconds(get(r, C.secs));
+      const coffee = {
+        id: uuid(), created_at: created, updated_at: nowISO(), created_by: me.id, name, roaster,
+        method: byTitle(METHODS, get(r, C.method)) || "other",
+        coffee_grams: num(get(r, C.grams)), water_grams: num(get(r, C.water)), grind_size: get(r, C.grind),
+        brew_seconds: isBad(secs) ? null : secs, water_temp_c: num(get(r, C.temp)), barcode,
+        description: get(r, C.desc), photo_paths: [],
+      };
+      plan.coffeesNew.push(coffee); planned.set(key, coffee.id); cid = coffee.id;
+    }
+    const stars = Math.round(Number(get(r, C.stars).replace(",", ".")));
+    if (!(stars >= 1 && stars <= 5)) continue;
+    const who = get(r, C.who).toLowerCase();
+    if (who && who !== myName && who !== "du" && who !== "ich") { plan.ratingsOther++; continue; }
+    if (ratings.some((x) => x.coffee_id === cid && x.user_id === me.id) || plan.ratingsNew.some((x) => x.coffee_id === cid)) { plan.ratingsKnown++; continue; }
+    plan.ratingsNew.push({
+      id: uuid(), coffee_id: cid, user_id: me.id, drink: byTitle(DRINKS, get(r, C.drink)), stars,
+      flavor_tags: get(r, C.tags).split(",").map((t) => byTitle(TAGS, t)).filter(Boolean),
+      notes: get(r, C.notes), created_at: parseDeDate(get(r, C.rdate)) || nowISO(), updated_at: nowISO(),
+    });
+  }
+  return plan;
+}
+
+async function applyCsvImport(plan) {
+  dialog("Wird importiert …", "", []);
+  for (const c of plan.coffeesNew) { await dbPut("coffees", c); await queue({ op: "upsert", table: "coffees", row: c }); }
+  for (const r of plan.ratingsNew) { await dbPut("ratings", r); await queue({ op: "upsert", table: "ratings", row: r }); }
+  await refreshState(); renderAll(); sync();
+  const noDrink = plan.ratingsNew.filter((r) => !r.drink).length;
+  dialog("Import fertig", `${plan.coffeesNew.length} Kaffees und ${plan.ratingsNew.length} Bewertungen hinzugefügt.` +
+    (noDrink ? `\nBei ${noDrink} Bewertungen fehlt das Getränk – du kannst es über „Ändern“ nachtragen.` : ""), [{ label: "OK", style: "primary" }]);
+}
+
+// ================= Menü =================
+$("menuBtn").onclick = async () => {
+  const pending = await pendingCount();
+  const who = `Angemeldet als ${nameOf(me.id)} (${me.email})`;
+  const st = syncError ? "Zurzeit keine Verbindung zum gemeinsamen Speicher." : lastSync ? `Zuletzt abgeglichen um ${fmtClock(lastSync)}` : "";
+  dialog("Kaffee-Tagebuch", [who, st, pending ? `${pending} Änderungen warten auf Übertragung` : "", lastBackupText()].filter(Boolean).join("\n"), [
+    { label: "Jetzt abgleichen", action: sync },
+    { label: "Exportieren …", action: () => dialog("Exportieren", "Die Excel-Tabelle ist zum Lesen und Weiterverarbeiten. Die Sicherung enthält zusätzlich alle Fotos und lässt sich vollständig wieder importieren.", [
+      { label: "Excel-Tabelle", action: exportTable },
+      { label: "Sicherung mit Fotos", action: createBackup },
+      { label: "Abbrechen" },
+    ]) },
+    { label: "Importieren …", action: () => $("restoreInput").click() },
+    { label: "Abmelden", style: "destructive", action: logout },
+    { label: "Schließen" },
+  ]);
 };
 
 // ================= Start =================
 (async function start() {
-  try {
-    db = await openDB();
-    await loadEntries();
-  } catch (err) {
-    dialog("Speicher nicht verfügbar", "Die Einträge können in diesem Browser nicht gespeichert werden. Bitte die App in Safari öffnen (kein privater Modus).", [{ label: "OK" }]);
+  try { db = await openDB(); }
+  catch (err) {
+    dialog("Speicher nicht verfügbar", "Bitte die App in Safari öffnen (kein privater Modus).", [{ label: "OK" }]);
+    return;
   }
-  renderList();
+  if (!window.supabase || !CFG.supabaseUrl || !CFG.supabaseKey) {
+    dialog("Einrichtung fehlt", "Die Datei config.js oder supabase.js fehlt auf GitHub. Bitte alle Dateien hochladen.", [{ label: "OK" }]);
+    return;
+  }
+  sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {
+    auth: { persistSession: true, autoRefreshToken: true, storageKey: "kaffee-auth", detectSessionInUrl: false },
+  });
+  let session = null;
+  try { session = (await sb.auth.getSession()).data.session; } catch (_) {}
+  if (session && session.user) await afterLogin(session.user);
+  else showLogin();
+
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") sync(); });
+  window.addEventListener("online", () => sync());
+  setInterval(() => { if (document.visibilityState === "visible") sync(); }, 120000);
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 })();
