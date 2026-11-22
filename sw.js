@@ -1,5 +1,5 @@
 // Macht die App offline nutzbar. Bei Internet wird immer die neueste Version geladen.
-const CACHE = "kaffee-tagebuch-v5";
+const CACHE = "kaffee-tagebuch-v6";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png", "./zxing.min.js", "./config.js", "./supabase.js"];
 
 self.addEventListener("install", (event) => {
